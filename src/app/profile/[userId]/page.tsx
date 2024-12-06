@@ -16,11 +16,11 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
   useEffect(() => {
     const fetchUserOpportunities = async () => {
       try {
-        const docs = await getDocuments('opportunities', ['userId', '==', params.userId]);
+        const docs = await getDocuments<Opportunity>('opportunities', ['userId', '==', params.userId]);
         const sortedDocs = docs.sort((a, b) => 
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
-        setOpportunities(sortedDocs as Opportunity[]);
+        setOpportunities(sortedDocs);
       } catch (error) {
         console.error('Error fetching opportunities:', error);
       } finally {

@@ -14,8 +14,10 @@ import {
   query,
   where,
   WhereFilterOp,
+  DocumentData,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { FirestoreData } from "../types";
 
 // Auth functions
 export const logoutUser = () => signOut(auth);
@@ -32,12 +34,15 @@ export const signInWithGoogle = async () => {
 };
 
 // Firestore functions
-export const addDocument = (collectionName: string, data: any) =>
+export const addDocument = (collectionName: string, data: FirestoreData) =>
   addDoc(collection(db, collectionName), data);
 
 type WhereClause = [string, WhereFilterOp, any];
 
-export const getDocuments = async (collectionName: string, whereClause?: WhereClause) => {
+export const getDocuments = async <T extends DocumentData>(
+  collectionName: string,
+  whereClause?: WhereClause
+): Promise<(T & { id: string })[]> => {
   try {
     let q = collection(db, collectionName);
     
@@ -50,15 +55,18 @@ export const getDocuments = async (collectionName: string, whereClause?: WhereCl
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })) as (T & { id: string })[];
   } catch (error) {
     console.error('Error getting documents:', error);
     throw error;
   }
 };
 
-export const updateDocument = (collectionName: string, id: string, data: any) =>
-  updateDoc(doc(db, collectionName, id), data);
+export const updateDocument = (
+  collectionName: string,
+  id: string,
+  data: Partial<FirestoreData>
+) => updateDoc(doc(db, collectionName, id), data);
 
 export const deleteDocument = (collectionName: string, id: string) =>
   deleteDoc(doc(db, collectionName, id));

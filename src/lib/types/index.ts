@@ -9,12 +9,18 @@ export interface User {
 export interface Opportunity {
   id: string;
   userId: string;
+  userName: string;
+  userPhotoUrl?: string;
   content: string;
-  audioUrl?: string;
-  transcription?: string;
   createdAt: string;
   likes: string[];
-  replies: Reply[];
+  replies: Array<{
+    id: string;
+    userId: string;
+    userName: string;
+    content: string;
+    createdAt: string;
+  }>;
 }
 
 export interface Reply {
@@ -24,4 +30,8 @@ export interface Reply {
   audioUrl?: string;
   transcription?: string;
   createdAt: string;
+}
+
+export type FirestoreData = {
+  [key: string]: any;
 } 
