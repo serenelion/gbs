@@ -6,6 +6,7 @@ import { getDocuments } from '@/lib/firebase/firebaseUtils';
 import OpportunityCard from '@/components/opportunity/OpportunityCard';
 import { Opportunity } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Image from 'next/image';
 
 export default function ProfilePage({ params }: { params: { userId: string } }) {
   const { user } = useAuth();
@@ -15,9 +16,7 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
   useEffect(() => {
     const fetchUserOpportunities = async () => {
       try {
-        const docs = await getDocuments('opportunities', [
-          ['userId', '==', params.userId]
-        ]);
+        const docs = await getDocuments('opportunities', ['userId', '==', params.userId]);
         const sortedDocs = docs.sort((a, b) => 
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
@@ -40,10 +39,12 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
     <main className="max-w-4xl mx-auto px-4 py-8">
       <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
         <div className="flex items-center gap-4 mb-6">
-          <img
+          <Image
             src={user?.photoURL || '/default-avatar.png'}
             alt={user?.displayName || 'User'}
-            className="w-20 h-20 rounded-full"
+            width={80}
+            height={80}
+            className="rounded-full"
           />
           <div>
             <h1 className="text-2xl font-bold">{user?.displayName}</h1>

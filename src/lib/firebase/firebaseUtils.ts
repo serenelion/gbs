@@ -11,6 +11,9 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  query,
+  where,
+  WhereFilterOp,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -32,12 +35,26 @@ export const signInWithGoogle = async () => {
 export const addDocument = (collectionName: string, data: any) =>
   addDoc(collection(db, collectionName), data);
 
-export const getDocuments = async (collectionName: string) => {
-  const querySnapshot = await getDocs(collection(db, collectionName));
-  return querySnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }));
+type WhereClause = [string, WhereFilterOp, any];
+
+export const getDocuments = async (collectionName: string, whereClause?: WhereClause) => {
+  try {
+    let q = collection(db, collectionName);
+    
+    if (whereClause) {
+      const [field, operator, value] = whereClause;
+      q = query(collection(db, collectionName), where(field, operator, value));
+    }
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error getting documents:', error);
+    throw error;
+  }
 };
 
 export const updateDocument = (collectionName: string, id: string, data: any) =>
