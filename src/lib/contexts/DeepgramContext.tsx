@@ -9,7 +9,7 @@ import {
   type LiveTranscriptionEvent,
 } from "@deepgram/sdk";
 
-import { createContext, useContext, useState, ReactNode, FunctionComponent, useRef } from "react";
+import { createContext, useContext, useState, ReactNode, useRef } from "react";
 
 interface DeepgramContextType {
   connectToDeepgram: () => Promise<void>;
@@ -31,74 +31,54 @@ const getApiKey = async (): Promise<string> => {
   return result.key;
 };
 
-const DeepgramContextProvider: FunctionComponent<DeepgramContextProviderProps> = ({ children }) => {
-  const [connection, setConnection] = useState<WebSocket | null>(null);
-  const [connectionState, setConnectionState] = useState<SOCKET_STATES>(SOCKET_STATES.closed);
+export const DeepgramContextProvider: React.FC<DeepgramContextProviderProps> = ({ children }) => {
+  const [connectionState, setConnectionState] = useState<SOCKET_STATES>(SOCKET_STATES.NONE);
   const [realtimeTranscript, setRealtimeTranscript] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const audioRef = useRef<MediaRecorder | null>(null);
+  const clientRef = useRef<LiveClient | null>(null);
 
   const connectToDeepgram = async () => {
     try {
-      setError(null);
-      setRealtimeTranscript("");
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioRef.current = new MediaRecorder(stream);
-
       const apiKey = await getApiKey();
+      const client = createClient(apiKey);
+      
+      const liveClient = await client.listen.live({
+        model: "nova-2",
+        smart_format: true,
+        language: "en",
+      });
 
-      console.log("Opening WebSocket connection...");
-      const socket = new WebSocket("wss://api.deepgram.com/v1/listen", ["token", apiKey]);
+      liveClient.on(LiveTranscriptionEvents.Open, () => {
+        setConnectionState(SOCKET_STATES.OPEN);
+        setError(null);
+      });
 
-      socket.onopen = () => {
-        setConnectionState(SOCKET_STATES.open);
-        console.log("WebSocket connection opened");
-        audioRef.current!.addEventListener("dataavailable", (event) => {
-          if (event.data.size > 0 && socket.readyState === WebSocket.OPEN) {
-            socket.send(event.data);
-          }
-        });
+      liveClient.on(LiveTranscriptionEvents.Close, () => {
+        setConnectionState(SOCKET_STATES.CLOSED);
+      });
 
-        audioRef.current!.start(250);
-      };
+      liveClient.on(LiveTranscriptionEvents.Error, (error) => {
+        setError(error.message);
+        setConnectionState(SOCKET_STATES.CLOSED);
+      });
 
-      socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.channel && data.channel.alternatives && data.channel.alternatives[0]) {
-          const newTranscript = data.channel.alternatives[0].transcript;
-          setRealtimeTranscript((prev) => prev + " " + newTranscript);
-        }
-      };
+      liveClient.on(LiveTranscriptionEvents.Transcript, (transcript: LiveTranscriptionEvent) => {
+        const text = transcript.channel?.alternatives[0]?.text || "";
+        setRealtimeTranscript((prev) => prev + " " + text);
+      });
 
-      socket.onerror = (error) => {
-        console.error("WebSocket error:", error);
-        setError("Error connecting to Deepgram. Please try again.");
-        disconnectFromDeepgram();
-      };
-
-      socket.onclose = (event) => {
-        setConnectionState(SOCKET_STATES.closed);
-        console.log("WebSocket connection closed:", event.code, event.reason);
-      };
-
-      setConnection(socket);
-    } catch (error) {
-      console.error("Error starting voice recognition:", error);
-      setError(error instanceof Error ? error.message : "An unknown error occurred");
-      setConnectionState(SOCKET_STATES.closed);
+      clientRef.current = liveClient;
+      setConnectionState(SOCKET_STATES.CONNECTING);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to connect to Deepgram");
+      setConnectionState(SOCKET_STATES.CLOSED);
     }
   };
 
   const disconnectFromDeepgram = () => {
-    if (connection) {
-      connection.close();
-      setConnection(null);
-    }
-    if (audioRef.current) {
-      audioRef.current.stop();
-    }
+    clientRef.current?.finish();
+    setConnectionState(SOCKET_STATES.CLOSED);
     setRealtimeTranscript("");
-    setConnectionState(SOCKET_STATES.closed);
   };
 
   return (
@@ -116,21 +96,11 @@ const DeepgramContextProvider: FunctionComponent<DeepgramContextProviderProps> =
   );
 };
 
-// Use the useDeepgram hook to access the deepgram context and use the deepgram in any component.
-// This allows you to connect to the deepgram and disconnect from the deepgram via a socket.
-// Make sure to wrap your application in a DeepgramContextProvider to use the deepgram.
-function useDeepgram(): DeepgramContextType {
+export const useDeepgram = () => {
   const context = useContext(DeepgramContext);
   if (context === undefined) {
     throw new Error("useDeepgram must be used within a DeepgramContextProvider");
   }
   return context;
-}
-export {
-  DeepgramContextProvider,
-  useDeepgram,
-  SOCKET_STATES,
-  LiveTranscriptionEvents,
-  type LiveTranscriptionEvent,
 };
 
