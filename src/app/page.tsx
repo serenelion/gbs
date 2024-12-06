@@ -1,6 +1,16 @@
-import OpportunityFormWrapper from "@/components/opportunity/OpportunityFormWrapper";
-import OpportunityFeedWrapper from "@/components/opportunity/OpportunityFeedWrapper";
+import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
 import { Sparkles } from "lucide-react";
+
+const OpportunityFormWrapper = dynamic(
+  () => import('@/components/opportunity/OpportunityFormWrapper'),
+  { ssr: false }
+);
+
+const OpportunityFeedWrapper = dynamic(
+  () => import('@/components/opportunity/OpportunityFeedWrapper'),
+  { ssr: false }
+);
 
 export default function Home() {
   return (
@@ -21,14 +31,36 @@ export default function Home() {
             Help grow the community by sharing opportunities for collaboration,
             funding, or support.
           </p>
-          <OpportunityFormWrapper />
+          <Suspense fallback={<FormSkeleton />}>
+            <OpportunityFormWrapper />
+          </Suspense>
         </div>
       </div>
 
       <div>
         <h2 className="text-2xl font-semibold mb-6">Community Opportunities</h2>
-        <OpportunityFeedWrapper />
+        <Suspense fallback={<FeedSkeleton />}>
+          <OpportunityFeedWrapper />
+        </Suspense>
       </div>
     </main>
+  );
+}
+
+function FormSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="h-32 w-full bg-gray-200 rounded" />
+    </div>
+  );
+}
+
+function FeedSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="h-40 bg-gray-200 rounded animate-pulse" />
+      ))}
+    </div>
   );
 }
