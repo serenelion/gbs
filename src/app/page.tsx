@@ -1,3 +1,5 @@
+'use client';
+
 import OpportunityForm from "@/components/opportunity/OpportunityForm";
 import OpportunityFeed from "@/components/opportunity/OpportunityFeed";
 import { Sparkles } from "lucide-react";
