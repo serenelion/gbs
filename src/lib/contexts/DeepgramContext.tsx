@@ -12,7 +12,7 @@ import {
 import { createContext, useContext, useState, ReactNode, useRef } from "react";
 
 interface DeepgramContextType {
-  connectToDeepgram: () => Promise<void>;
+  connectToDeepgram: () => Promise<LiveClient>;
   disconnectFromDeepgram: () => void;
   connectionState: SOCKET_STATES;
   realtimeTranscript: string;

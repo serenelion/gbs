@@ -49,7 +49,9 @@ export default function VoiceRecorder({ onTranscription, onAudioRecorded, onInte
 
       // Connect to Deepgram
       const liveClient = await connectToDeepgram();
-      deepgramClientRef.current = liveClient;
+      if (liveClient) {
+        deepgramClientRef.current = liveClient;
+      }
 
       // Process audio data
       processor.onaudioprocess = (e) => {
