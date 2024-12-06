@@ -39,6 +39,12 @@ export const DeepgramContextProvider: React.FC<DeepgramContextProviderProps> = (
 
   const connectToDeepgram = async () => {
     try {
+      if (clientRef.current) {
+        clientRef.current.finish();
+        clientRef.current = null;
+      }
+      setRealtimeTranscript("");
+
       const apiKey = await getApiKey();
       const client = createClient(apiKey);
       
@@ -46,37 +52,59 @@ export const DeepgramContextProvider: React.FC<DeepgramContextProviderProps> = (
         model: "nova-2",
         smart_format: true,
         language: "en",
+        punctuate: true,
+        interim_results: true,
+        encoding: 'linear16',
+        sample_rate: 48000,
+        channels: 1,
       });
 
-      liveClient.on(LiveTranscriptionEvents.Open, () => {
+      liveClient.addListener(LiveTranscriptionEvents.Open, () => {
+        console.log('Deepgram connection opened');
         setConnectionState(SOCKET_STATES.open);
         setError(null);
       });
 
-      liveClient.on(LiveTranscriptionEvents.Close, () => {
+      liveClient.addListener(LiveTranscriptionEvents.Close, () => {
+        console.log('Deepgram connection closed normally');
         setConnectionState(SOCKET_STATES.closed);
       });
 
-      liveClient.on(LiveTranscriptionEvents.Error, (error) => {
-        setError(error.message);
-        setConnectionState(SOCKET_STATES.closed);
+      liveClient.addListener(LiveTranscriptionEvents.Error, (error) => {
+        console.error('Deepgram error:', error);
+        setError(typeof error === 'string' ? error : 'Unknown error occurred');
       });
 
-      liveClient.on(LiveTranscriptionEvents.Transcript, (event: LiveTranscriptionEvent) => {
-        const transcript = event.transcript || "";
-        setRealtimeTranscript((prev) => prev + " " + transcript);
+      liveClient.addListener(LiveTranscriptionEvents.Transcript, (data: LiveTranscriptionEvent) => {
+        if (!data?.channel?.alternatives?.[0]) return;
+        
+        const transcript = data.channel.alternatives[0].transcript || "";
+        if (transcript.trim()) {
+          setRealtimeTranscript((prev) => {
+            if (data.is_final) {
+              return (prev + ' ' + transcript).trim();
+            }
+            return transcript.trim();
+          });
+        }
       });
 
       clientRef.current = liveClient;
       setConnectionState(SOCKET_STATES.connecting);
+      return liveClient;
     } catch (err) {
+      console.error('Deepgram connection error:', err);
       setError(err instanceof Error ? err.message : "Failed to connect to Deepgram");
       setConnectionState(SOCKET_STATES.closed);
+      throw err;
     }
   };
 
   const disconnectFromDeepgram = () => {
-    clientRef.current?.finish();
+    if (clientRef.current) {
+      clientRef.current.finish();
+      clientRef.current = null;
+    }
     setConnectionState(SOCKET_STATES.closed);
     setRealtimeTranscript("");
   };

@@ -12,6 +12,11 @@ export default function Header() {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
+  const handleSignOut = async () => {
+    await signOut();
+    setShowUserMenu(false);
+  };
+
   return (
     <header className="bg-white border-b sticky top-0 z-40">
       <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -54,10 +59,7 @@ export default function Header() {
                       Profile
                     </Link>
                     <button
-                      onClick={() => {
-                        signOut();
-                        setShowUserMenu(false);
-                      }}
+                      onClick={handleSignOut}
                       className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 w-full"
                     >
                       <LogOut className="h-4 w-4" />
@@ -70,18 +72,15 @@ export default function Header() {
           ) : (
             <button
               onClick={() => setShowAuthDialog(true)}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
             >
               Sign In
             </button>
           )}
         </div>
-      </div>
 
-      <AuthDialog
-        isOpen={showAuthDialog}
-        onClose={() => setShowAuthDialog(false)}
-      />
+        <AuthDialog isOpen={showAuthDialog} onClose={() => setShowAuthDialog(false)} />
+      </div>
     </header>
   );
 } 
