@@ -1,8 +1,6 @@
-'use client';
-
 export default function Loading() {
   return (
-    <main className="min-h-screen max-w-4xl mx-auto px-4 py-8">
+    <div className="min-h-screen max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8 text-center">
         <div className="h-10 w-64 bg-gray-200 rounded animate-pulse mx-auto mb-2" />
         <div className="h-6 w-96 bg-gray-200 rounded animate-pulse mx-auto" />
@@ -19,11 +17,11 @@ export default function Loading() {
       <div>
         <div className="h-8 w-64 bg-gray-200 rounded animate-pulse mb-6" />
         <div className="space-y-4">
-          {[...Array(3)].map((_, i) => (
+          {[1, 2, 3].map((i) => (
             <div key={i} className="h-40 bg-gray-200 rounded animate-pulse" />
           ))}
         </div>
       </div>
-    </main>
+    </div>
   );
 } 

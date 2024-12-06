@@ -1,7 +1,5 @@
-'use client';
-
-import OpportunityForm from "@/components/opportunity/OpportunityForm";
-import OpportunityFeed from "@/components/opportunity/OpportunityFeed";
+import OpportunityFormWrapper from "@/components/opportunity/OpportunityFormWrapper";
+import OpportunityFeedWrapper from "@/components/opportunity/OpportunityFeedWrapper";
 import { Sparkles } from "lucide-react";
 
 export default function Home() {
@@ -23,13 +21,13 @@ export default function Home() {
             Help grow the community by sharing opportunities for collaboration,
             funding, or support.
           </p>
-          <OpportunityForm />
+          <OpportunityFormWrapper />
         </div>
       </div>
 
       <div>
         <h2 className="text-2xl font-semibold mb-6">Community Opportunities</h2>
-        <OpportunityFeed />
+        <OpportunityFeedWrapper />
       </div>
     </main>
   );
