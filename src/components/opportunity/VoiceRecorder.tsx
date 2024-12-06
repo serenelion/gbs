@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useDeepgram } from '@/lib/contexts/DeepgramContext';
 import { Mic, Square, Pause, Play, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { LiveClient } from "@deepgram/sdk";
 
 interface VoiceRecorderProps {
   onTranscription: (text: string) => void;

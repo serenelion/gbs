@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import { Sparkles, User, LogOut, ChevronDown } from 'lucide-react';
 import AuthDialog from '../auth/AuthDialog';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 
 export default function Header() {
   const { user, signOut } = useAuth();
@@ -34,11 +35,15 @@ export default function Header() {
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center gap-2 hover:bg-gray-100 p-2 rounded-lg transition-colors"
               >
-                <img
-                  src={user.photoURL || '/default-avatar.png'}
-                  alt={user.displayName || 'User'}
-                  className="w-8 h-8 rounded-full"
-                />
+                {user?.photoURL && (
+                  <Image
+                    src={user.photoURL}
+                    alt={user.displayName || 'User'}
+                    width={32}
+                    height={32}
+                    className="rounded-full"
+                  />
+                )}
                 <ChevronDown className="h-4 w-4 text-gray-600" />
               </button>
 
