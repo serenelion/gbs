@@ -15,6 +15,8 @@ import {
   where,
   WhereFilterOp,
   DocumentData,
+  Query,
+  CollectionReference,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { FirestoreData } from "../types";
@@ -44,11 +46,11 @@ export const getDocuments = async <T extends DocumentData>(
   whereClause?: WhereClause
 ): Promise<(T & { id: string })[]> => {
   try {
-    let q = collection(db, collectionName);
+    let q: Query | CollectionReference = collection(db, collectionName);
     
     if (whereClause) {
       const [field, operator, value] = whereClause;
-      q = query(collection(db, collectionName), where(field, operator, value));
+      q = query(q, where(field, operator, value));
     }
     
     const querySnapshot = await getDocs(q);
