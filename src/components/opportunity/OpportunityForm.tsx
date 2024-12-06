@@ -24,7 +24,7 @@ export default function OpportunityForm() {
 
     setIsSubmitting(true);
     try {
-      let audioUrl = null;
+      let audioUrl: string | undefined = undefined;
       if (audioBlob) {
         const fileName = `audio/${user.uid}/${Date.now()}.wav`;
         audioUrl = await uploadFile(
@@ -35,6 +35,8 @@ export default function OpportunityForm() {
 
       await addDocument('opportunities', {
         userId: user.uid,
+        userName: user.displayName || 'Anonymous',
+        userPhotoUrl: user.photoURL || undefined,
         content: content.trim(),
         audioUrl,
         createdAt: new Date().toISOString(),
