@@ -126,7 +126,6 @@ function useDeepgram(): DeepgramContextType {
   }
   return context;
 }
-
 export {
   DeepgramContextProvider,
   useDeepgram,
@@ -134,3 +133,4 @@ export {
   LiveTranscriptionEvents,
   type LiveTranscriptionEvent,
 };
+
