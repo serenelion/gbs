@@ -33,14 +33,16 @@ export interface Reply {
 }
 
 // Generic type for Firestore document data
-export type FirestoreData = {
-  [key: string]: any;
+export interface FirestoreData {
+  id?: string;
   userId?: string;
   userName?: string;
+  userPhotoUrl?: string;
   content?: string;
   createdAt?: string;
   likes?: string[];
   replies?: Reply[];
   audioUrl?: string;
   transcription?: string;
+  [key: string]: any;
 } 
