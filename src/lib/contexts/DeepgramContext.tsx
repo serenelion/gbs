@@ -32,7 +32,7 @@ const getApiKey = async (): Promise<string> => {
 };
 
 export const DeepgramContextProvider: React.FC<DeepgramContextProviderProps> = ({ children }) => {
-  const [connectionState, setConnectionState] = useState<SOCKET_STATES>(SOCKET_STATES.NONE);
+  const [connectionState, setConnectionState] = useState<SOCKET_STATES>(SOCKET_STATES.CLOSED);
   const [realtimeTranscript, setRealtimeTranscript] = useState("");
   const [error, setError] = useState<string | null>(null);
   const clientRef = useRef<LiveClient | null>(null);
