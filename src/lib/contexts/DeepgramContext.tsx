@@ -32,7 +32,7 @@ const getApiKey = async (): Promise<string> => {
 };
 
 export const DeepgramContextProvider: React.FC<DeepgramContextProviderProps> = ({ children }) => {
-  const [connectionState, setConnectionState] = useState<SOCKET_STATES>(SOCKET_STATES.CLOSED);
+  const [connectionState, setConnectionState] = useState<SOCKET_STATES>(SOCKET_STATES.closed);
   const [realtimeTranscript, setRealtimeTranscript] = useState("");
   const [error, setError] = useState<string | null>(null);
   const clientRef = useRef<LiveClient | null>(null);
@@ -49,17 +49,17 @@ export const DeepgramContextProvider: React.FC<DeepgramContextProviderProps> = (
       });
 
       liveClient.on(LiveTranscriptionEvents.Open, () => {
-        setConnectionState(SOCKET_STATES.OPEN);
+        setConnectionState(SOCKET_STATES.open);
         setError(null);
       });
 
       liveClient.on(LiveTranscriptionEvents.Close, () => {
-        setConnectionState(SOCKET_STATES.CLOSED);
+        setConnectionState(SOCKET_STATES.closed);
       });
 
       liveClient.on(LiveTranscriptionEvents.Error, (error) => {
         setError(error.message);
-        setConnectionState(SOCKET_STATES.CLOSED);
+        setConnectionState(SOCKET_STATES.closed);
       });
 
       liveClient.on(LiveTranscriptionEvents.Transcript, (transcript: LiveTranscriptionEvent) => {
@@ -68,16 +68,16 @@ export const DeepgramContextProvider: React.FC<DeepgramContextProviderProps> = (
       });
 
       clientRef.current = liveClient;
-      setConnectionState(SOCKET_STATES.CONNECTING);
+      setConnectionState(SOCKET_STATES.connecting);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to connect to Deepgram");
-      setConnectionState(SOCKET_STATES.CLOSED);
+      setConnectionState(SOCKET_STATES.closed);
     }
   };
 
   const disconnectFromDeepgram = () => {
     clientRef.current?.finish();
-    setConnectionState(SOCKET_STATES.CLOSED);
+    setConnectionState(SOCKET_STATES.closed);
     setRealtimeTranscript("");
   };
 
