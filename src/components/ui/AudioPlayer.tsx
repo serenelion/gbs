@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Play, Pause } from 'lucide-react';
+import { Play, Pause, Trash2 } from 'lucide-react';
 
 interface AudioPlayerProps {
   src: string;
   className?: string;
+  onDelete?: () => void;
 }
 
-export default function AudioPlayer({ src, className = '' }: AudioPlayerProps) {
+export default function AudioPlayer({ src, className = '', onDelete }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -155,13 +156,26 @@ export default function AudioPlayer({ src, className = '' }: AudioPlayerProps) {
 
   return (
     <div className={`bg-white rounded-lg p-4 ${className}`}>
-      <div ref={containerRef} className="relative h-24 mb-4">
-        <canvas
-          ref={canvasRef}
-          width={canvasWidth}
-          height={canvasHeight}
-          className="w-full h-full"
-        />
+      <div className="flex justify-between items-center mb-4">
+        <div ref={containerRef} className="relative h-24 flex-1">
+          <canvas
+            ref={canvasRef}
+            width={canvasWidth}
+            height={canvasHeight}
+            className="w-full h-full"
+          />
+        </div>
+        {onDelete && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="ml-4 p-2 text-gray-500 hover:text-red-500 transition-colors"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        )}
       </div>
       <div className="flex items-center gap-4">
         <button
