@@ -62,9 +62,9 @@ export const DeepgramContextProvider: React.FC<DeepgramContextProviderProps> = (
         setConnectionState(SOCKET_STATES.closed);
       });
 
-      liveClient.on(LiveTranscriptionEvents.Transcript, (transcript: LiveTranscriptionEvent) => {
-        const text = transcript.channel?.alternatives[0]?.text || "";
-        setRealtimeTranscript((prev) => prev + " " + text);
+      liveClient.on(LiveTranscriptionEvents.Transcript, (event: LiveTranscriptionEvent) => {
+        const transcript = event.transcript || "";
+        setRealtimeTranscript((prev) => prev + " " + transcript);
       });
 
       clientRef.current = liveClient;
