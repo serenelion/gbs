@@ -1,9 +1,13 @@
-import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
+import HomeLayout from '@/components/layout/HomeLayout';
+import Loading from './loading';
 
-const HomeContent = dynamic(() => import('@/components/HomeContent'), {
-  ssr: false,
-});
+export const dynamic = 'force-dynamic';
 
 export default function Home() {
-  return <HomeContent />;
+  return (
+    <Suspense fallback={<Loading />}>
+      <HomeLayout />
+    </Suspense>
+  );
 }
