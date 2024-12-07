@@ -1,8 +1,8 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 import { Sparkles } from "lucide-react";
+import dynamic from 'next/dynamic';
 import { FormSkeleton, FeedSkeleton } from '../skeletons';
 
 const OpportunityForm = dynamic(() => import("../opportunity/OpportunityForm"), {
@@ -34,17 +34,13 @@ export default function HomeLayout() {
             Help grow the community by sharing opportunities for collaboration,
             funding, or support.
           </p>
-          <Suspense fallback={<FormSkeleton />}>
-            <OpportunityForm />
-          </Suspense>
+          <OpportunityForm />
         </div>
       </div>
 
       <div>
         <h2 className="text-2xl font-semibold mb-6">Community Opportunities</h2>
-        <Suspense fallback={<FeedSkeleton />}>
-          <OpportunityFeed />
-        </Suspense>
+        <OpportunityFeed />
       </div>
     </main>
   );
