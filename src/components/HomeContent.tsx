@@ -2,8 +2,17 @@
 
 import { Sparkles } from "lucide-react";
 import { Suspense } from "react";
-import OpportunityForm from "./opportunity/OpportunityForm";
-import OpportunityFeed from "./opportunity/OpportunityFeed";
+import dynamic from 'next/dynamic';
+
+const OpportunityForm = dynamic(() => import("./opportunity/OpportunityForm"), {
+  loading: () => <FormSkeleton />,
+  ssr: false
+});
+
+const OpportunityFeed = dynamic(() => import("./opportunity/OpportunityFeed"), {
+  loading: () => <FeedSkeleton />,
+  ssr: false
+});
 
 export default function HomeContent() {
   return (
@@ -24,17 +33,13 @@ export default function HomeContent() {
             Help grow the community by sharing opportunities for collaboration,
             funding, or support.
           </p>
-          <Suspense fallback={<FormSkeleton />}>
-            <OpportunityForm />
-          </Suspense>
+          <OpportunityForm />
         </div>
       </div>
 
       <div>
         <h2 className="text-2xl font-semibold mb-6">Community Opportunities</h2>
-        <Suspense fallback={<FeedSkeleton />}>
-          <OpportunityFeed />
-        </Suspense>
+        <OpportunityFeed />
       </div>
     </main>
   );

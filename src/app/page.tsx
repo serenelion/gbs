@@ -1,8 +1,7 @@
-import ClientHome from '@/components/home/ClientHome';
+import HomeContent from '@/components/HomeContent';
 
 export const dynamic = 'force-dynamic';
-export const runtime = 'edge';
 
 export default function Home() {
-  return <ClientHome />;
+  return <HomeContent />;
 }
