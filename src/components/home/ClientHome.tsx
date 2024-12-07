@@ -1,13 +1,13 @@
 'use client';
 
-import { Suspense } from 'react';
-import HomeLayout from '@/components/layout/HomeLayout';
+import dynamic from 'next/dynamic';
 import Loading from '@/app/loading';
 
+const HomeLayout = dynamic(() => import('../layout/HomeLayout'), {
+  ssr: false,
+  loading: () => <Loading />
+});
+
 export default function ClientHome() {
-  return (
-    <Suspense fallback={<Loading />}>
-      <HomeLayout />
-    </Suspense>
-  );
+  return <HomeLayout />;
 } 

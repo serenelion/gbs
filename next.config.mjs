@@ -39,6 +39,11 @@ const nextConfig = {
   experimental: {
     serverActions: true,
   },
+  reactStrictMode: true,
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
+  },
 };
 
 export default nextConfig;
