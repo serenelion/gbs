@@ -1,13 +1,8 @@
-import { Suspense } from 'react';
-import HomeLayout from '@/components/layout/HomeLayout';
-import Loading from './loading';
+import ClientHome from '@/components/home/ClientHome';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export default function Home() {
-  return (
-    <Suspense fallback={<Loading />}>
-      <HomeLayout />
-    </Suspense>
-  );
+  return <ClientHome />;
 }
