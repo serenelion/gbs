@@ -29,15 +29,13 @@ const nextConfig = {
     ],
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    unoptimized: true,
   },
   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
-  },
-  experimental: {
-    serverActions: true,
   },
   reactStrictMode: true,
   swcMinify: true,
@@ -60,6 +58,7 @@ const nextConfig = {
   poweredByHeader: false,
   generateEtags: false,
   pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
+  output: 'export',
 };
 
 export default nextConfig;

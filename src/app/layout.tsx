@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { Suspense } from 'react';
 import { Providers } from "./providers";
 import Header from "@/components/layout/Header";
 import "@/styles/globals.css";
@@ -14,13 +15,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning>
-        <Providers>
-          <Header />
-          {children}
-        </Providers>
+    <html lang="en">
+      <body>
+        <Suspense>
+          <Providers>
+            <Header />
+            {children}
+          </Providers>
+        </Suspense>
       </body>
     </html>
   );
 }
+
+// Add static page config
+export const dynamic = 'force-static';
