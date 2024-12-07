@@ -56,6 +56,7 @@ const nextConfig = {
     return config;
   },
   output: 'standalone',
+  staticPageGenerationTimeout: 1000,
 };
 
 export default nextConfig;

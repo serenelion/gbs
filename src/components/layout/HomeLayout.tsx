@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { useEffect, useState } from 'react';
 import { Sparkles } from "lucide-react";
 import dynamic from 'next/dynamic';
 import { FormSkeleton, FeedSkeleton } from '../skeletons';
@@ -16,6 +16,16 @@ const OpportunityFeed = dynamic(() => import("../opportunity/OpportunityFeed"), 
 });
 
 export default function HomeLayout() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <main className="min-h-screen max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8 text-center">
