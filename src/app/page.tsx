@@ -1,17 +1,16 @@
-import { Suspense } from 'react';
-import Loading from './loading';
 import dynamic from 'next/dynamic';
+import Loading from './loading';
 
-// Import the client component
-const ClientHome = dynamic(() => import('@/components/home/ClientHome'), {
-  ssr: false,
-  loading: () => <Loading />
+// Import HomeContent instead of ClientHome for better SSR handling
+const HomeContent = dynamic(() => import('@/components/HomeContent'), {
+  loading: () => <Loading />,
+  ssr: true // Enable SSR for the main content
 });
 
 export default function Home() {
   return (
-    <Suspense fallback={<Loading />}>
-      <ClientHome />
-    </Suspense>
+    <div className="min-h-screen">
+      <HomeContent />
+    </div>
   );
 }

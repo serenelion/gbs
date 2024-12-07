@@ -39,11 +39,15 @@ const nextConfig = {
   experimental: {
     serverActions: true,
   },
-  reactStrictMode: false,
+  reactStrictMode: true,
   swcMinify: true,
   compiler: {
-    removeConsole: process.env.NODE_ENV === "production",
+    removeConsole: process.env.NODE_ENV === "production" ? {
+      exclude: ['error', 'warn'],
+    } : false,
   },
+  output: 'standalone',
+  unstable_runtimeJS: true,
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {

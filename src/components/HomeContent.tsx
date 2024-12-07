@@ -16,15 +16,11 @@ const OpportunityFeed = dynamic(() => import("./opportunity/OpportunityFeed"), {
 });
 
 export default function HomeContent() {
-  const [mounted, setMounted] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    setIsClient(true);
   }, []);
-
-  if (!mounted) {
-    return <Loading />;
-  }
 
   return (
     <main className="min-h-screen max-w-4xl mx-auto px-4 py-8">
@@ -44,13 +40,13 @@ export default function HomeContent() {
             Help grow the community by sharing opportunities for collaboration,
             funding, or support.
           </p>
-          {mounted && <OpportunityForm />}
+          {isClient && <OpportunityForm />}
         </div>
       </div>
 
       <div>
         <h2 className="text-2xl font-semibold mb-6">Community Opportunities</h2>
-        {mounted && <OpportunityFeed />}
+        {isClient && <OpportunityFeed />}
       </div>
     </main>
   );
