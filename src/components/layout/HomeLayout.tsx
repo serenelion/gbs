@@ -26,21 +26,25 @@ export default function HomeLayout() {
         </p>
       </div>
 
-      <div className="mb-8">
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-2">Share an Opportunity</h2>
-          <p className="text-gray-600 mb-4">
-            Help grow the community by sharing opportunities for collaboration,
-            funding, or support.
-          </p>
-          <OpportunityForm />
+      <Suspense fallback={<FormSkeleton />}>
+        <div className="mb-8">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 shadow-sm">
+            <h2 className="text-xl font-semibold mb-2">Share an Opportunity</h2>
+            <p className="text-gray-600 mb-4">
+              Help grow the community by sharing opportunities for collaboration,
+              funding, or support.
+            </p>
+            <OpportunityForm />
+          </div>
         </div>
-      </div>
+      </Suspense>
 
-      <div>
-        <h2 className="text-2xl font-semibold mb-6">Community Opportunities</h2>
-        <OpportunityFeed />
-      </div>
+      <Suspense fallback={<FeedSkeleton />}>
+        <div>
+          <h2 className="text-2xl font-semibold mb-6">Community Opportunities</h2>
+          <OpportunityFeed />
+        </div>
+      </Suspense>
     </main>
   );
 }

@@ -5,8 +5,6 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "placehold.co",
-        port: "",
-        pathname: "/**",
       },
       {
         protocol: "https",
@@ -32,23 +30,11 @@ const nextConfig = {
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: "https://api.openai.com/:path*",
-      },
-    ];
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
-  },
-  webpack: (config) => {
-    config.resolve.fallback = { fs: false, net: false, tls: false };
-    return config;
   },
   experimental: {
     serverActions: true,
