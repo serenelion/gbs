@@ -39,7 +39,7 @@ const nextConfig = {
   experimental: {
     serverActions: true,
   },
-  reactStrictMode: true,
+  reactStrictMode: false,
   swcMinify: true,
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",

@@ -1,20 +1,28 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Sparkles } from "lucide-react";
-import { Suspense } from "react";
 import dynamic from 'next/dynamic';
 
 const OpportunityForm = dynamic(() => import("./opportunity/OpportunityForm"), {
-  loading: () => <FormSkeleton />,
   ssr: false
 });
 
 const OpportunityFeed = dynamic(() => import("./opportunity/OpportunityFeed"), {
-  loading: () => <FeedSkeleton />,
   ssr: false
 });
 
 export default function HomeContent() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <main className="min-h-screen max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8 text-center">
@@ -33,32 +41,14 @@ export default function HomeContent() {
             Help grow the community by sharing opportunities for collaboration,
             funding, or support.
           </p>
-          <OpportunityForm />
+          {mounted && <OpportunityForm />}
         </div>
       </div>
 
       <div>
         <h2 className="text-2xl font-semibold mb-6">Community Opportunities</h2>
-        <OpportunityFeed />
+        {mounted && <OpportunityFeed />}
       </div>
     </main>
-  );
-}
-
-function FormSkeleton() {
-  return (
-    <div className="animate-pulse">
-      <div className="h-32 w-full bg-gray-200 rounded" />
-    </div>
-  );
-}
-
-function FeedSkeleton() {
-  return (
-    <div className="space-y-4">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="h-40 bg-gray-200 rounded animate-pulse" />
-      ))}
-    </div>
   );
 } 

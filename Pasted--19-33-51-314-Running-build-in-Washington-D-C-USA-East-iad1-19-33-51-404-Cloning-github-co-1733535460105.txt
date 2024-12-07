@@ -1,0 +1,57 @@
+[19:33:51.314] Running build in Washington, D.C., USA (East) – iad1
+[19:33:51.404] Cloning github.com/serenelion/gbs (Branch: main, Commit: 552e954)
+[19:33:51.638] Cloning completed: 233.007ms
+[19:33:55.662] Restored build cache from previous deployment (5mg6XP4CdT7PBAzuA24nC5Q4fgyh)
+[19:33:55.736] Running "vercel build"
+[19:33:56.142] Vercel CLI 39.1.3
+[19:33:56.493] Installing dependencies...
+[19:33:59.356] 
+[19:33:59.356] added 20 packages, and changed 1 package in 3s
+[19:33:59.356] 
+[19:33:59.356] 213 packages are looking for funding
+[19:33:59.357]   run `npm fund` for details
+[19:33:59.366] Detected Next.js version: 14.2.7
+[19:33:59.370] Running "npm run build"
+[19:33:59.501] 
+[19:33:59.501] > template-2@0.1.0 build
+[19:33:59.501] > next build
+[19:33:59.501] 
+[19:34:00.190]   ▲ Next.js 14.2.7
+[19:34:00.190] 
+[19:34:00.265]    Creating an optimized production build ...
+[19:34:24.184]  ✓ Compiled successfully
+[19:34:24.185]    Linting and checking validity of types ...
+[19:34:29.296]    Collecting page data ...
+[19:34:29.934] (node:370) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+[19:34:29.934] (Use `node --trace-deprecation ...` to show where the warning was created)
+[19:34:29.995]  ⚠ Using edge runtime on a page currently disables static generation for that page
+[19:34:31.147]    Generating static pages (0/7) ...
+[19:34:31.870]    Generating static pages (1/7) 
+[19:34:31.871]    Generating static pages (3/7) 
+[19:34:31.871] heartbeats undefined
+[19:34:31.872] heartbeats undefined
+[19:34:31.872] heartbeats undefined
+[19:34:31.872] heartbeats undefined
+[19:34:31.872]    Generating static pages (5/7) 
+[19:34:32.067] (node:385) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+[19:34:32.067] (Use `node --trace-deprecation ...` to show where the warning was created)
+[19:34:32.250] 
+[19:34:32.250] Error occurred prerendering page "/". Read more: https://nextjs.org/docs/messages/prerender-error
+[19:34:32.250] 
+[19:34:32.250] TypeError: Cannot read properties of undefined (reading 'clientModules')
+[19:34:32.250]     at /vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:16:23728
+[19:34:32.250]     at /vercel/path0/node_modules/next/dist/server/lib/trace/tracer.js:191:62
+[19:34:32.251]     at /vercel/path0/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+[19:34:32.251]     at NoopContextManager.with (/vercel/path0/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+[19:34:32.251]     at ContextAPI.with (/vercel/path0/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)
+[19:34:32.251]     at NoopTracer.startActiveSpan (/vercel/path0/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:65:31)
+[19:34:32.251]     at ProxyTracer.startActiveSpan (/vercel/path0/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:36:24)
+[19:34:32.251]     at /vercel/path0/node_modules/next/dist/server/lib/trace/tracer.js:122:103
+[19:34:32.251]     at NoopContextManager.with (/vercel/path0/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+[19:34:32.252]     at ContextAPI.with (/vercel/path0/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)
+[19:34:32.252]  ✓ Generating static pages (7/7)
+[19:34:32.261] 
+[19:34:32.262] > Export encountered errors on following paths:
+[19:34:32.262] 	/(main)/page: /
+[19:34:32.293] Error: Command "npm run build" exited with 1
+[19:34:32.629] 
