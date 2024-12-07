@@ -3,16 +3,16 @@
 import { useEffect, useState } from 'react';
 import { Sparkles } from "lucide-react";
 import dynamic from 'next/dynamic';
-import { FormSkeleton, FeedSkeleton } from '../skeletons';
+import Loading from '@/app/loading';
 
 const OpportunityForm = dynamic(() => import("../opportunity/OpportunityForm"), {
   ssr: false,
-  loading: () => <FormSkeleton />
+  loading: () => <div className="animate-pulse h-32 bg-gray-100 rounded-lg" />
 });
 
 const OpportunityFeed = dynamic(() => import("../opportunity/OpportunityFeed"), {
   ssr: false,
-  loading: () => <FeedSkeleton />
+  loading: () => <div className="animate-pulse h-64 bg-gray-100 rounded-lg" />
 });
 
 export default function ClientHome() {
@@ -23,7 +23,7 @@ export default function ClientHome() {
   }, []);
 
   if (!mounted) {
-    return null;
+    return <Loading />;
   }
 
   return (
@@ -44,13 +44,13 @@ export default function ClientHome() {
             Help grow the community by sharing opportunities for collaboration,
             funding, or support.
           </p>
-          <OpportunityForm />
+          {mounted && <OpportunityForm />}
         </div>
       </div>
 
       <div>
         <h2 className="text-2xl font-semibold mb-6">Community Opportunities</h2>
-        <OpportunityFeed />
+        {mounted && <OpportunityFeed />}
       </div>
     </main>
   );
