@@ -3,15 +3,16 @@
 import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 import { Sparkles } from "lucide-react";
+import { FormSkeleton, FeedSkeleton } from '../skeletons';
 
 const OpportunityForm = dynamic(() => import("../opportunity/OpportunityForm"), {
   ssr: false,
-  loading: () => <FormSkeleton />,
+  loading: () => <FormSkeleton />
 });
 
 const OpportunityFeed = dynamic(() => import("../opportunity/OpportunityFeed"), {
   ssr: false,
-  loading: () => <FeedSkeleton />,
+  loading: () => <FeedSkeleton />
 });
 
 export default function HomeLayout() {
@@ -26,43 +27,25 @@ export default function HomeLayout() {
         </p>
       </div>
 
-      <Suspense fallback={<FormSkeleton />}>
-        <div className="mb-8">
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-2">Share an Opportunity</h2>
-            <p className="text-gray-600 mb-4">
-              Help grow the community by sharing opportunities for collaboration,
-              funding, or support.
-            </p>
+      <div className="mb-8">
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 shadow-sm">
+          <h2 className="text-xl font-semibold mb-2">Share an Opportunity</h2>
+          <p className="text-gray-600 mb-4">
+            Help grow the community by sharing opportunities for collaboration,
+            funding, or support.
+          </p>
+          <Suspense fallback={<FormSkeleton />}>
             <OpportunityForm />
-          </div>
+          </Suspense>
         </div>
-      </Suspense>
+      </div>
 
-      <Suspense fallback={<FeedSkeleton />}>
-        <div>
-          <h2 className="text-2xl font-semibold mb-6">Community Opportunities</h2>
+      <div>
+        <h2 className="text-2xl font-semibold mb-6">Community Opportunities</h2>
+        <Suspense fallback={<FeedSkeleton />}>
           <OpportunityFeed />
-        </div>
-      </Suspense>
+        </Suspense>
+      </div>
     </main>
-  );
-}
-
-function FormSkeleton() {
-  return (
-    <div className="animate-pulse">
-      <div className="h-32 w-full bg-gray-200 rounded" />
-    </div>
-  );
-}
-
-function FeedSkeleton() {
-  return (
-    <div className="space-y-4">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="h-40 bg-gray-200 rounded animate-pulse" />
-      ))}
-    </div>
   );
 } 
