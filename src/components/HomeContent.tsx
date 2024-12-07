@@ -3,13 +3,16 @@
 import { useEffect, useState } from 'react';
 import { Sparkles } from "lucide-react";
 import dynamic from 'next/dynamic';
+import Loading from '@/app/loading';
 
 const OpportunityForm = dynamic(() => import("./opportunity/OpportunityForm"), {
-  ssr: false
+  ssr: false,
+  loading: () => <div className="animate-pulse h-32 bg-gray-100 rounded-lg" />
 });
 
 const OpportunityFeed = dynamic(() => import("./opportunity/OpportunityFeed"), {
-  ssr: false
+  ssr: false,
+  loading: () => <div className="animate-pulse h-64 bg-gray-100 rounded-lg" />
 });
 
 export default function HomeContent() {
@@ -20,7 +23,7 @@ export default function HomeContent() {
   }, []);
 
   if (!mounted) {
-    return null;
+    return <Loading />;
   }
 
   return (

@@ -56,6 +56,9 @@ const nextConfig = {
     return config;
   },
   output: 'standalone',
+  poweredByHeader: false,
+  generateEtags: false,
+  pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
 };
 
 export default nextConfig;

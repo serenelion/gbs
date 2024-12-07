@@ -1,0 +1,55 @@
+[19:44:05.978] Running build in Washington, D.C., USA (East) – iad1
+[19:44:06.079] Cloning github.com/serenelion/gbs (Branch: main, Commit: d1fbe52)
+[19:44:06.270] Cloning completed: 187.509ms
+[19:44:10.135] Restored build cache from previous deployment (5mg6XP4CdT7PBAzuA24nC5Q4fgyh)
+[19:44:10.203] Running "vercel build"
+[19:44:10.606] Vercel CLI 39.1.3
+[19:44:10.947] Installing dependencies...
+[19:44:13.749] 
+[19:44:13.750] added 20 packages, and changed 1 package in 3s
+[19:44:13.750] 
+[19:44:13.750] 213 packages are looking for funding
+[19:44:13.750]   run `npm fund` for details
+[19:44:13.760] Detected Next.js version: 14.2.7
+[19:44:13.764] Running "npm run build"
+[19:44:13.975] 
+[19:44:13.975] > template-2@0.1.0 build
+[19:44:13.975] > next build
+[19:44:13.975] 
+[19:44:14.641]   ▲ Next.js 14.2.7
+[19:44:14.642] 
+[19:44:14.713]    Creating an optimized production build ...
+[19:44:38.024]  ✓ Compiled successfully
+[19:44:38.025]    Linting and checking validity of types ...
+[19:44:43.128]    Collecting page data ...
+[19:44:43.739] (node:368) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+[19:44:43.739] (Use `node --trace-deprecation ...` to show where the warning was created)
+[19:44:43.852]  ⚠ Using edge runtime on a page currently disables static generation for that page
+[19:44:45.065]    Generating static pages (0/7) ...
+[19:44:45.724]    Generating static pages (1/7) 
+[19:44:45.725]    Generating static pages (3/7) 
+[19:44:45.725]    Generating static pages (5/7) 
+[19:44:45.954] heartbeats undefined
+[19:44:45.955] heartbeats undefined
+[19:44:45.955] heartbeats undefined
+[19:44:45.955] heartbeats undefined
+[19:44:45.955]  ✓ Generating static pages (7/7)
+[19:44:45.955] 
+[19:44:45.955] Error occurred prerendering page "/". Read more: https://nextjs.org/docs/messages/prerender-error
+[19:44:45.955] 
+[19:44:45.955] TypeError: Cannot read properties of undefined (reading 'clientModules')
+[19:44:45.955]     at /vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:16:23728
+[19:44:45.955]     at /vercel/path0/node_modules/next/dist/server/lib/trace/tracer.js:191:62
+[19:44:45.955]     at /vercel/path0/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+[19:44:45.955]     at NoopContextManager.with (/vercel/path0/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+[19:44:45.956]     at ContextAPI.with (/vercel/path0/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)
+[19:44:45.956]     at NoopTracer.startActiveSpan (/vercel/path0/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:65:31)
+[19:44:45.956]     at ProxyTracer.startActiveSpan (/vercel/path0/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:36:24)
+[19:44:45.956]     at /vercel/path0/node_modules/next/dist/server/lib/trace/tracer.js:122:103
+[19:44:45.956]     at NoopContextManager.with (/vercel/path0/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+[19:44:45.956]     at ContextAPI.with (/vercel/path0/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)
+[19:44:46.143] 
+[19:44:46.144] > Export encountered errors on following paths:
+[19:44:46.144] 	/(main)/page: /
+[19:44:46.177] Error: Command "npm run build" exited with 1
+[19:44:46.507] 
