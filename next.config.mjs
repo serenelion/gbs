@@ -46,8 +46,6 @@ const nextConfig = {
       exclude: ['error', 'warn'],
     } : false,
   },
-  output: 'standalone',
-  unstable_runtimeJS: true,
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
