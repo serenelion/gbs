@@ -1,11 +1,14 @@
-import HomeHeader from "@/components/home/HomeHeader";
-import OpportunitySection from "@/components/OpportunitySection";
+import { Suspense } from 'react';
+import ClientHome from'@/components/home/ClientHome';
+import Loading from './loading';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export default function Home() {
   return (
-    <main className="min-h-screen max-w-4xl mx-auto px-4 py-8">
-      <HomeHeader />
-      <OpportunitySection />
-    </main>
+    <Suspense fallback={<Loading />}>
+      <ClientHome />
+    </Suspense>
   );
 }
