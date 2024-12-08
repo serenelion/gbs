@@ -16,6 +16,7 @@ interface DeepgramContextType {
   disconnectFromDeepgram: () => void;
   connectionState: SOCKET_STATES;
   realtimeTranscript: string;
+  finalTranscript: string;
   error: string | null;
 }
 
@@ -34,8 +35,10 @@ const getApiKey = async (): Promise<string> => {
 export const DeepgramContextProvider: React.FC<DeepgramContextProviderProps> = ({ children }) => {
   const [connectionState, setConnectionState] = useState<SOCKET_STATES>(SOCKET_STATES.closed);
   const [realtimeTranscript, setRealtimeTranscript] = useState("");
+  const [finalTranscript, setFinalTranscript] = useState("");
   const [error, setError] = useState<string | null>(null);
   const clientRef = useRef<LiveClient | null>(null);
+  const transcriptPartsRef = useRef<string[]>([]);
 
   const connectToDeepgram = async () => {
     try {
@@ -44,6 +47,8 @@ export const DeepgramContextProvider: React.FC<DeepgramContextProviderProps> = (
         clientRef.current = null;
       }
       setRealtimeTranscript("");
+      setFinalTranscript("");
+      transcriptPartsRef.current = [];
 
       const apiKey = await getApiKey();
       const client = createClient(apiKey);
@@ -79,13 +84,16 @@ export const DeepgramContextProvider: React.FC<DeepgramContextProviderProps> = (
         if (!data?.channel?.alternatives?.[0]) return;
         
         const transcript = data.channel.alternatives[0].transcript || "";
+        
         if (transcript.trim()) {
-          setRealtimeTranscript((prev) => {
-            if (data.is_final) {
-              return (prev + ' ' + transcript).trim();
-            }
-            return transcript.trim();
-          });
+          setRealtimeTranscript(transcript);
+        }
+        
+        if (transcript.trim() && data.is_final) {
+          transcriptPartsRef.current.push(transcript.trim());
+          const fullTranscript = transcriptPartsRef.current.join(' ');
+          setFinalTranscript(fullTranscript);
+          setRealtimeTranscript(fullTranscript);
         }
       });
 
@@ -106,19 +114,19 @@ export const DeepgramContextProvider: React.FC<DeepgramContextProviderProps> = (
       clientRef.current = null;
     }
     setConnectionState(SOCKET_STATES.closed);
-    setRealtimeTranscript("");
+  };
+
+  const value = {
+    connectToDeepgram,
+    disconnectFromDeepgram,
+    connectionState,
+    realtimeTranscript,
+    finalTranscript,
+    error,
   };
 
   return (
-    <DeepgramContext.Provider
-      value={{
-        connectToDeepgram,
-        disconnectFromDeepgram,
-        connectionState,
-        realtimeTranscript,
-        error,
-      }}
-    >
+    <DeepgramContext.Provider value={value}>
       {children}
     </DeepgramContext.Provider>
   );

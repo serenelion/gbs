@@ -2,23 +2,12 @@
 
 import AudioPlayer from './AudioPlayer';
 
-interface AudioWrapperProps {
-  src: string;
-  className?: string;
-  onDelete?: () => void;
-}
-
-export default function AudioWrapper({ src, className = '', onDelete }: AudioWrapperProps) {
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent form submission
-    e.stopPropagation(); // Stop event bubbling
-  };
-
+export default function AudioWrapper({ src, onDelete }: { src: string, onDelete?: () => void }) {
   return (
-    <div onClick={handleClick}>
+    <div className="w-full">
       <AudioPlayer 
         src={src} 
-        className={className} 
+        className="w-full"
         onDelete={onDelete}
       />
     </div>

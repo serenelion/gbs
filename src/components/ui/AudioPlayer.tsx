@@ -15,6 +15,9 @@ export default function AudioPlayer({ src, className = '', onDelete }: AudioPlay
   const [currentTime, setCurrentTime] = useState(0);
   const [canvasWidth, setCanvasWidth] = useState(0);
   const [canvasHeight, setCanvasHeight] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -127,15 +130,90 @@ export default function AudioPlayer({ src, className = '', onDelete }: AudioPlay
     };
   }, [isPlaying]);
 
-  const togglePlayPause = () => {
+  useEffect(() => {
     if (!audioRef.current) return;
 
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
+    const audio = audioRef.current;
+
+    const handleLoadStart = () => setIsLoading(true);
+    const handleCanPlay = () => setIsLoading(false);
+    const handleError = () => {
+      setError('Failed to load audio');
+      setIsLoading(false);
+    };
+
+    audio.addEventListener('loadstart', handleLoadStart);
+    audio.addEventListener('canplay', handleCanPlay);
+    audio.addEventListener('error', handleError);
+
+    return () => {
+      audio.removeEventListener('loadstart', handleLoadStart);
+      audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('error', handleError);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Reset state when src changes
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+    setIsLoading(true);
+    setError(null);
+    isSetupDone.current = false;
+
+    // Cleanup previous audio context
+    if (audioContextRef.current?.state !== 'closed') {
+      audioContextRef.current?.close();
     }
-    setIsPlaying(!isPlaying);
+    audioContextRef.current = null;
+    analyserRef.current = null;
+    sourceRef.current = null;
+
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+  }, [src]);
+
+  const setupAudioContext = () => {
+    if (!audioRef.current || audioContextRef.current) return;
+
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const analyser = audioContext.createAnalyser();
+      const source = audioContext.createMediaElementSource(audioRef.current);
+
+      source.connect(analyser);
+      analyser.connect(audioContext.destination);
+
+      analyser.fftSize = 256;
+      
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+      sourceRef.current = source;
+    } catch (err) {
+      console.error('Audio context setup error:', err);
+      setError('Failed to setup audio playback');
+    }
+  };
+
+  const togglePlayPause = async () => {
+    if (!audioRef.current) return;
+
+    try {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        setupAudioContext();
+        await audioRef.current.play();
+        setIsPlaying(true);
+      }
+    } catch (err) {
+      console.error('Playback error:', err);
+      setError('Failed to play audio');
+      setIsPlaying(false);
+    }
   };
 
   const handleTimeUpdate = () => {
@@ -154,59 +232,64 @@ export default function AudioPlayer({ src, className = '', onDelete }: AudioPlay
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!audioRef.current) return;
+    const time = Number(e.target.value);
+    audioRef.current.currentTime = time;
+    setCurrentTime(time);
+  };
+
   return (
-    <div className={`bg-white rounded-lg p-4 ${className}`}>
-      <div className="flex justify-between items-center mb-4">
-        <div ref={containerRef} className="relative h-24 flex-1">
+    <div ref={containerRef} className={`relative ${className}`}>
+      {error ? (
+        <div className="text-red-500 text-sm">{error}</div>
+      ) : isLoading ? (
+        <div className="flex items-center justify-center h-12">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+        </div>
+      ) : (
+        <>
           <canvas
             ref={canvasRef}
             width={canvasWidth}
-            height={canvasHeight}
-            className="w-full h-full"
-          />
-        </div>
-        {onDelete && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="ml-4 p-2 text-gray-500 hover:text-red-500 transition-colors"
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
-        )}
-      </div>
-      <div className="flex items-center gap-4">
-        <button
-          onClick={togglePlayPause}
-          className="p-2 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
-        >
-          {isPlaying ? (
-            <Pause className="w-6 h-6" />
-          ) : (
-            <Play className="w-6 h-6" />
-          )}
-        </button>
-        <div className="flex-1">
-          <input
-            type="range"
-            min={0}
-            max={duration}
-            value={currentTime}
-            onChange={(e) => {
-              if (audioRef.current) {
-                audioRef.current.currentTime = Number(e.target.value);
-              }
-            }}
+            height={40}
             className="w-full"
           />
-          <div className="flex justify-between text-sm text-gray-500">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={togglePlayPause}
+              className="flex-shrink-0 p-2 text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              {isPlaying ? (
+                <Pause className="w-6 h-6" />
+              ) : (
+                <Play className="w-6 h-6" />
+              )}
+            </button>
+
+            <div className="flex-1">
+              <input
+                type="range"
+                min={0}
+                max={duration}
+                value={currentTime}
+                onChange={handleSeek}
+                onMouseDown={() => setIsDragging(true)}
+                onMouseUp={() => setIsDragging(false)}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                style={{
+                  background: `linear-gradient(to right, #4f46e5 ${(currentTime / duration) * 100}%, #e5e7eb ${(currentTime / duration) * 100}%)`
+                }}
+              />
+              <div className="flex justify-between text-sm text-gray-500 mt-1">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
+
       <audio
         ref={audioRef}
         src={src}
