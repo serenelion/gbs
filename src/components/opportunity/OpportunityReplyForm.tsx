@@ -26,25 +26,42 @@ export default function OpportunityReplyForm({ opportunityId, onSuccess }: Oppor
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [isRecorderLoading, setIsRecorderLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isPostProcessing, setIsPostProcessing] = useState(false);
+  const [audioDuration, setAudioDuration] = useState<number | null>(null);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     setContent(newContent);
-    setIsTyping(newContent.trim() !== '');
+    adjustTextAreaHeight(e.target);
+    if (!isTyping && newContent.trim() !== '') {
+      setIsTyping(true);
+    }
+    if (newContent.trim() === '') {
+      setIsTyping(false);
+    }
+  };
+
+  const adjustTextAreaHeight = (element: HTMLTextAreaElement) => {
+    element.style.height = 'auto';
+    element.style.height = `${element.scrollHeight}px`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !content.trim() || isSubmitting) return;
 
+    if ((e.nativeEvent as any)?.submitter?.getAttribute('aria-label') !== 'Send reply') {
+      return;
+    }
+
     const loadingId = toast.loading('Sending your reply...');
     setIsSubmitting(true);
     try {
       let audioUrl = null;
       if (audioBlob) {
-        const fileName = `replies/${opportunityId}/${user.uid}/${Date.now()}.wav`;
+        const fileName = `replies/${opportunityId}/${user.uid}/${Date.now()}.webm`;
         audioUrl = await uploadFile(
-          new File([audioBlob], fileName),
+          new File([audioBlob], fileName, { type: 'audio/webm' }),
           fileName
         );
       }
@@ -55,7 +72,8 @@ export default function OpportunityReplyForm({ opportunityId, onSuccess }: Oppor
         userPhotoUrl: user.photoURL || null,
         content: content.trim(),
         createdAt: new Date().toISOString(),
-        ...(audioUrl && { audioUrl })
+        ...(audioUrl && { audioUrl }),
+        ...(audioDuration && { audioDuration })
       };
 
       await addDocument(`opportunities/${opportunityId}/replies`, replyData);
@@ -92,6 +110,9 @@ export default function OpportunityReplyForm({ opportunityId, onSuccess }: Oppor
       setShowAuth(true);
       return;
     }
+    setContent('');
+    setIsTyping(false);
+    setAudioPreview(null);
     setShowVoiceRecorder(true);
   };
 
@@ -129,19 +150,31 @@ export default function OpportunityReplyForm({ opportunityId, onSuccess }: Oppor
         ) : (
           <>
             {audioPreview && (
-              <div className="mb-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    Voice Note Transcription
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </button>
+              <div className="space-y-4">
+                <div className="bg-white rounded-lg shadow-sm border p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-medium text-gray-700">Voice Note</h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </div>
+                  <AudioWrapper 
+                    src={audioPreview}
+                    onDelete={() => setShowDeleteConfirm(true)}
+                    preventFormSubmission={true}
+                    initialDuration={audioDuration || undefined}
+                    onDurationChange={(duration) => {
+                      console.log('AudioWrapper duration change:', duration);
+                      if (!audioDuration && duration && isFinite(duration) && !isNaN(duration)) {
+                        setAudioDuration(duration);
+                      }
+                    }}
+                  />
                 </div>
               </div>
             )}
@@ -152,7 +185,11 @@ export default function OpportunityReplyForm({ opportunityId, onSuccess }: Oppor
                 onFocus={handleTextFocus}
                 placeholder={audioPreview ? "Edit transcription if needed..." : "Write a reply..."}
                 className="flex-1 p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                rows={1}
+                ref={(el) => {
+                  if (el) {
+                    adjustTextAreaHeight(el);
+                  }
+                }}
                 disabled={isSubmitting}
               />
               {!isTyping && !audioPreview && !showVoiceRecorder ? (
@@ -201,9 +238,11 @@ export default function OpportunityReplyForm({ opportunityId, onSuccess }: Oppor
               setIsTyping(false);
               setIsRecorderLoading(false);
             }}
-            onAudioRecorded={(blob) => {
+            onAudioRecorded={(blob, duration) => {
+              console.log('Received audio duration:', duration);
               setAudioBlob(blob);
               setAudioPreview(URL.createObjectURL(blob));
+              setAudioDuration(duration);
               setShowVoiceRecorder(false);
               setIsRecorderLoading(false);
             }}
@@ -216,18 +255,6 @@ export default function OpportunityReplyForm({ opportunityId, onSuccess }: Oppor
               setIsRecorderLoading(false);
               setIsTyping(false);
             }}
-          />
-        </div>
-      )}
-
-      {audioPreview && (
-        <div className={`bg-white rounded-lg shadow-sm border p-4 transition-opacity duration-200 ${isSubmitting ? 'opacity-50' : 'opacity-100'}`}>
-          <AudioWrapper 
-            src={audioPreview}
-            onDelete={() => {
-              handleDelete();
-            }}
-            disabled={isSubmitting}
           />
         </div>
       )}

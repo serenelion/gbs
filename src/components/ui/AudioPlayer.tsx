@@ -6,58 +6,71 @@ import { formatDuration } from '@/lib/utils';
 
 interface AudioPlayerProps {
   src: string;
+  duration?: number;
   className?: string;
   onDelete?: () => void;
+  preventFormSubmission?: boolean;
+  onLoadedMetadata?: (e: React.SyntheticEvent<HTMLAudioElement>) => void;
 }
 
-export default function AudioPlayer({ src, className, onDelete }: AudioPlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
+export default function AudioPlayer({ 
+  src, 
+  duration,
+  className = '', 
+  onDelete,
+  preventFormSubmission = false,
+  onLoadedMetadata
+}: AudioPlayerProps) {
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const progressBarRef = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Use provided duration if available, otherwise try to get it from the audio element
+  const displayDuration = duration || (audioRef.current?.duration || 0);
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleEnded = () => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+  };
+
+  const handleError = () => {
+    setError('Failed to load audio');
+    setIsLoading(false);
+  };
 
   useEffect(() => {
     if (!audioRef.current) return;
     
     const audio = audioRef.current;
     
-    const handleLoadMetadata = () => {
-      setDuration(audio.duration);
-      setIsLoading(false);
-    };
-    
-    const handleTimeUpdate = () => {
-      setCurrentTime(audio.currentTime);
-    };
-    
-    const handleEnded = () => {
-      setIsPlaying(false);
-      setCurrentTime(0);
-    };
-    
-    const handleError = () => {
-      setError('Failed to load audio');
-      setIsLoading(false);
-    };
-
-    audio.addEventListener('loadedmetadata', handleLoadMetadata);
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
+    audio.addEventListener('loadedmetadata', () => setIsLoading(false));
 
     return () => {
-      audio.removeEventListener('loadedmetadata', handleLoadMetadata);
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
+      audio.removeEventListener('loadedmetadata', () => setIsLoading(false));
     };
   }, []);
 
-  const handlePlayPause = () => {
+  const handlePlayPause = (e: React.MouseEvent) => {
+    if (preventFormSubmission) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!audioRef.current) return;
     
     if (isPlaying) {
@@ -68,14 +81,9 @@ export default function AudioPlayer({ src, className, onDelete }: AudioPlayerPro
     setIsPlaying(!isPlaying);
   };
 
-  const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!audioRef.current || !progressBarRef.current) return;
-    
-    const rect = progressBarRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const percentage = x / rect.width;
-    const newTime = percentage * duration;
-    
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTime = parseFloat(e.target.value);
+    if (!audioRef.current) return;
     audioRef.current.currentTime = newTime;
     setCurrentTime(newTime);
   };
@@ -87,63 +95,67 @@ export default function AudioPlayer({ src, className, onDelete }: AudioPlayerPro
   };
 
   return (
-    <div className={`bg-gray-50 rounded-lg p-3 ${className}`}>
-      {isLoading ? (
-        <div className="flex items-center justify-center h-12">
-          <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent" />
-        </div>
-      ) : error ? (
-        <div className="text-red-500 text-sm text-center">{error}</div>
+    <div className={`flex items-center gap-4 ${className}`}>
+      {error ? (
+        <div className="text-red-500 text-sm">{error}</div>
       ) : (
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handlePlayPause}
-              className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
-            >
-              {isPlaying ? (
-                <Pause className="w-5 h-5" />
-              ) : (
-                <Play className="w-5 h-5" />
-              )}
-            </button>
-            
-            <div 
-              ref={progressBarRef}
-              onClick={handleProgressBarClick}
-              className="flex-1 h-2 bg-gray-200 rounded-full cursor-pointer"
-            >
-              <div 
-                className="h-full bg-blue-500 rounded-full relative"
-                style={{ width: `${(currentTime / duration) * 100}%` }}
-              >
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-600 rounded-full shadow" />
-              </div>
-            </div>
+        <>
+          <button
+            type="button"
+            onClick={handlePlayPause}
+            className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
+            aria-label={isPlaying ? 'Pause' : 'Play'}
+            disabled={isLoading}
+          >
+            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+          </button>
 
-            <button
-              onClick={handleMuteToggle}
-              className="p-2 text-gray-600 hover:text-gray-800"
-            >
-              {isMuted ? (
-                <VolumeX className="w-5 h-5" />
-              ) : (
-                <Volume2 className="w-5 h-5" />
-              )}
-            </button>
-            
-            <span className="text-sm text-gray-600 min-w-[4rem]">
-              {formatDuration(currentTime)} / {formatDuration(duration)}
-            </span>
+          <div className="flex-1 space-y-2">
+            <div className="relative h-1 bg-gray-200 rounded-full">
+              <div
+                className="absolute h-full bg-blue-600 rounded-full"
+                style={{ width: `${(currentTime / displayDuration) * 100}%` }}
+              />
+              <input
+                type="range"
+                min="0"
+                max={displayDuration}
+                value={currentTime}
+                onChange={handleSeek}
+                className="absolute w-full h-full opacity-0 cursor-pointer"
+              />
+            </div>
+            <div className="flex justify-between text-sm text-gray-500">
+              <span>{formatDuration(currentTime)}</span>
+              <span>{formatDuration(displayDuration)}</span>
+            </div>
           </div>
-        </div>
+
+          <button
+            onClick={handleMuteToggle}
+            className="p-2 text-gray-600 hover:text-gray-800"
+          >
+            {isMuted ? (
+              <VolumeX className="w-5 h-5" />
+            ) : (
+              <Volume2 className="w-5 h-5" />
+            )}
+          </button>
+
+          <audio
+            ref={audioRef}
+            src={src}
+            preload="metadata"
+            onLoadedMetadata={onLoadedMetadata}
+            onTimeUpdate={handleTimeUpdate}
+            onEnded={handleEnded}
+            onError={handleError}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            className="hidden"
+          />
+        </>
       )}
-      <audio
-        ref={audioRef}
-        src={src}
-        preload="metadata"
-        className="hidden"
-      />
     </div>
   );
 } 

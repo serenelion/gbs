@@ -9,6 +9,7 @@ import Image from 'next/image';
 import AudioPlayer from '../ui/AudioPlayer';
 import OpportunityReplyForm from './OpportunityReplyForm';
 import { useState } from 'react';
+import AudioWrapper from '../ui/AudioWrapper';
 
 interface OpportunityCardProps {
   opportunity: Opportunity;
@@ -65,7 +66,11 @@ export default function OpportunityCard({ opportunity, hideNavigation, onReplySu
         
         {opportunity.audioUrl && (
           <div className="bg-gray-50 rounded-lg p-3">
-            <AudioPlayer src={opportunity.audioUrl} />
+            <AudioWrapper 
+              src={opportunity.audioUrl}
+              initialDuration={opportunity.audioDuration}
+              preventFormSubmission={true}
+            />
           </div>
         )}
       </div>

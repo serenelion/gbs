@@ -9,7 +9,7 @@ import AudioPlayer from '../ui/AudioPlayer';
 
 interface VoiceRecorderProps {
   onTranscription: (text: string) => void;
-  onAudioRecorded: (audioBlob: Blob) => void;
+  onAudioRecorded: (audioBlob: Blob, duration: number) => void;
   onInteraction: () => void;
   onCancel: () => void;
 }
@@ -32,6 +32,14 @@ export default function VoiceRecorder({ onTranscription, onAudioRecorded, onInte
   const chunksRef = useRef<Blob[]>([]);
   const deepgramClientRef = useRef<LiveClient | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const [isPostProcessing, setIsPostProcessing] = useState(false);
+  const [finalProcessedTranscript, setFinalProcessedTranscript] = useState('');
+  const recordingStartTimeRef = useRef<number | null>(null);
+  const finalTranscriptTimeoutRef = useRef<NodeJS.Timeout>();
+  const [audioDuration, setAudioDuration] = useState<number | null>(null);
 
   // Update realtime display when transcription comes in
   useEffect(() => {
@@ -40,13 +48,36 @@ export default function VoiceRecorder({ onTranscription, onAudioRecorded, onInte
     }
   }, [realtimeTranscript, isRecording]);
 
-  // Update final transcript when recording stops
+  // Update final transcript handling with better state management
   useEffect(() => {
-    if (!isRecording && finalTranscript) {
-      setEditableTranscript(finalTranscript);
-      onTranscription(finalTranscript);
+    if (!isRecording && (finalTranscript || realtimeText)) {
+      // Clear any existing timeout
+      if (finalTranscriptTimeoutRef.current) {
+        clearTimeout(finalTranscriptTimeoutRef.current);
+      }
+
+      // Immediately update with what we have
+      const currentTranscript = finalTranscript || realtimeText;
+      setEditableTranscript(currentTranscript);
+      onTranscription(currentTranscript);
+
+      // Set a timeout to catch any final updates
+      finalTranscriptTimeoutRef.current = setTimeout(() => {
+        const completeTranscript = finalTranscript || realtimeText;
+        if (completeTranscript !== currentTranscript) {
+          setEditableTranscript(completeTranscript);
+          onTranscription(completeTranscript);
+        }
+        setIsPostProcessing(false);
+      }, 2000);
     }
-  }, [finalTranscript, isRecording]);
+
+    return () => {
+      if (finalTranscriptTimeoutRef.current) {
+        clearTimeout(finalTranscriptTimeoutRef.current);
+      }
+    };
+  }, [finalTranscript, isRecording, realtimeText, onTranscription]);
 
   const handleStartRecording = async () => {
     setError(null);
@@ -55,144 +86,249 @@ export default function VoiceRecorder({ onTranscription, onAudioRecorded, onInte
     setAudioUrl(null);
     setEditableTranscript('');
     setIsProcessing(true);
+    recordingStartTimeRef.current = Date.now();
     
     try {
-      // Get audio stream first
+      // Get audio stream with optimized settings
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           channelCount: 1,
           sampleRate: 48000,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
         } 
       });
 
-      // Set up audio context for processing
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
+      // Create and store AudioContext with consistent sample rate
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({
         sampleRate: 48000,
       });
-      const source = audioContext.createMediaStreamSource(stream);
-      const processor = audioContext.createScriptProcessor(2048, 1, 1);
 
-      // Connect to Deepgram
-      const liveClient = await connectToDeepgram();
-      if (liveClient) {
-        deepgramClientRef.current = liveClient;
+      // Create and store audio source
+      sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
+      
+      // Create processor with larger buffer for stability
+      processorRef.current = audioContextRef.current.createScriptProcessor(8192, 1, 1);
+
+      // Connect to Deepgram with error handling
+      try {
+        const liveClient = await connectToDeepgram();
+        if (liveClient) {
+          deepgramClientRef.current = liveClient;
+        }
+      } catch (error) {
+        console.error('Deepgram connection failed:', error);
+        throw new Error('Failed to connect to transcription service');
       }
 
-      // Process audio data
-      processor.onaudioprocess = (e) => {
+      // Optimized audio processing
+      processorRef.current.onaudioprocess = (e) => {
         if (deepgramClientRef.current?.getReadyState() === WebSocket.OPEN) {
           const inputData = e.inputBuffer.getChannelData(0);
           const pcmData = new Int16Array(inputData.length);
+          
+          // Optimize audio conversion with buffer
+          const buffer = new Float32Array(inputData.length);
           for (let i = 0; i < inputData.length; i++) {
-            const s = Math.max(-1, Math.min(1, inputData[i]));
-            pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+            buffer[i] = Math.max(-1, Math.min(1, inputData[i]));
+            pcmData[i] = buffer[i] < 0 ? buffer[i] * 0x8000 : buffer[i] * 0x7FFF;
           }
+          
           deepgramClientRef.current.send(pcmData.buffer);
         }
       };
 
-      source.connect(processor);
-      processor.connect(audioContext.destination);
+      // Connect audio nodes
+      sourceRef.current.connect(processorRef.current);
+      processorRef.current.connect(audioContextRef.current.destination);
 
-      // Set up MediaRecorder with better error handling
+      // Set up MediaRecorder with single continuous stream
       mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: 'audio/webm',
+        mimeType: 'audio/webm;codecs=opus',
+        bitsPerSecond: 128000
       });
       
-      mediaRecorderRef.current.onerror = (event) => {
-        setError('Recording failed. Please try again.');
-        handleStopRecording();
-      };
-
-      // Clear any existing transcription timeout
-      if (transcriptionTimeoutRef.current) {
-        clearTimeout(transcriptionTimeoutRef.current);
-      }
-
-      // Debounce transcription updates
-      transcriptionTimeoutRef.current = setTimeout(() => {
-        const finalTranscript = realtimeTranscript.trim();
-        if (finalTranscript !== editableTranscript) {
-          setEditableTranscript(finalTranscript);
-        }
-      }, 500);
-
       mediaRecorderRef.current.ondataavailable = (e) => {
         if (e.data.size > 0) {
           chunksRef.current.push(e.data);
         }
       };
 
-      mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
-        const url = URL.createObjectURL(audioBlob);
-        setAudioUrl(url);
-        onAudioRecorded(audioBlob);
-        
-        // Ensure the final transcript is set here as well
-        const finalTranscript = realtimeTranscript.trim();
-        setEditableTranscript(finalTranscript);
-        
-        // Clean up audio processing
-        source.disconnect();
-        processor.disconnect();
-        audioContext.close();
-      };
-
-      mediaRecorderRef.current.start(250);
+      // Start recording as a single continuous stream
+      mediaRecorderRef.current.start();
       setIsRecording(true);
+      setIsProcessing(false);
     } catch (error) {
+      console.error('Recording setup failed:', error);
+      cleanupAudioResources();
       setError('Could not access microphone. Please check permissions and try again.');
       setIsProcessing(false);
     }
   };
 
-  const handleStopRecording = async () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+  const cleanupAudioResources = () => {
+    try {
+      // Stop media recorder first
+      if (mediaRecorderRef.current?.state !== 'inactive') {
+        try {
+          mediaRecorderRef.current?.stop();
+        } catch (e) {
+          console.warn('Error stopping media recorder:', e);
+        }
+      }
+
+      // Stop all tracks
+      try {
+        mediaRecorderRef.current?.stream?.getTracks().forEach(track => track.stop());
+      } catch (e) {
+        console.warn('Error stopping media tracks:', e);
+      }
+
+      // Clean up audio processing chain in order
+      if (processorRef.current) {
+        try {
+          processorRef.current.disconnect();
+        } catch (e) {
+          console.warn('Error disconnecting processor:', e);
+        }
+        processorRef.current = null;
+      }
+
+      if (sourceRef.current) {
+        try {
+          sourceRef.current.disconnect();
+        } catch (e) {
+          console.warn('Error disconnecting source:', e);
+        }
+        sourceRef.current = null;
+      }
+
+      if (audioContextRef.current) {
+        try {
+          audioContextRef.current.close();
+        } catch (e) {
+          console.warn('Error closing audio context:', e);
+        }
+        audioContextRef.current = null;
+      }
+
+      // Clean up Deepgram connection last
+      if (deepgramClientRef.current) {
+        disconnectFromDeepgram();
+        deepgramClientRef.current = null;
+      }
+
+      // Reset media recorder
+      mediaRecorderRef.current = null;
+    } catch (error) {
+      console.error('Error in cleanup:', error);
     }
+  };
 
-    setIsAnalyzing(true); // Show analyzing state
-    disconnectFromDeepgram();
-    setIsRecording(false);
+  const getDuration = async (audioBlob: Blob): Promise<number> => {
+    return new Promise((resolve) => {
+      // First try to get duration from recording time as it's more reliable
+      const recordingDuration = (Date.now() - (recordingStartTimeRef.current || Date.now())) / 1000;
+      console.log('Recording time duration:', recordingDuration);
 
-    // Create final audio blob
-    const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
-    const url = URL.createObjectURL(audioBlob);
-    setAudioUrl(url);
+      // Create a new blob with explicit MIME type and codec
+      const properBlob = new Blob([audioBlob], { 
+        type: 'audio/webm;codecs=opus' 
+      });
+
+      // Create an off-screen audio element for validation
+      const audio = new Audio();
+      const blobUrl = URL.createObjectURL(properBlob);
+      let durationResolved = false;
+
+      const cleanup = () => {
+        URL.revokeObjectURL(blobUrl);
+        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        audio.removeEventListener('error', handleError);
+        clearTimeout(timeoutId);
+      };
+
+      const handleLoadedMetadata = () => {
+        const metadataDuration = audio.duration;
+        console.log('Metadata duration:', metadataDuration);
+        
+        if (!durationResolved) {
+          durationResolved = true;
+          cleanup();
+          // Use recording time as it's more reliable
+          resolve(recordingDuration);
+        }
+      };
+
+      const handleError = () => {
+        if (!durationResolved) {
+          console.log('Using recording time due to metadata error');
+          durationResolved = true;
+          cleanup();
+          resolve(recordingDuration);
+        }
+      };
+
+      const timeoutId = setTimeout(() => {
+        if (!durationResolved) {
+          console.log('Metadata loading timed out, using recording time');
+          handleError();
+        }
+      }, 1000);
+
+      audio.preload = 'metadata';
+      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.addEventListener('error', handleError);
+      audio.src = blobUrl;
+    });
+  };
+
+  const handleStopRecording = async () => {
+    setIsAnalyzing(true);
+    setIsPostProcessing(true);
 
     try {
-      // Convert blob to base64 for API
-      const reader = new FileReader();
-      reader.readAsDataURL(audioBlob);
-      reader.onloadend = async () => {
-        const base64Audio = reader.result?.toString().split(',')[1];
-        
-        // Get optimized transcription from API
-        const response = await fetch('/api/transcribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ audio: base64Audio }),
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        const currentText = realtimeText;
+        setEditableTranscript(currentText);
+        onTranscription(currentText);
+
+        mediaRecorderRef.current.stop();
+        await new Promise<void>((resolve) => {
+          if (mediaRecorderRef.current) {
+            mediaRecorderRef.current.onstop = () => resolve();
+          } else {
+            resolve();
+          }
         });
-        
-        const data = await response.json();
-        if (data.transcription) {
-          setEditableTranscript(data.transcription);
-          onTranscription(data.transcription);
-        }
-        
-        setIsAnalyzing(false);
-        onAudioRecorded(audioBlob);
-      };
-    } catch (error) {
-      console.error('Error analyzing audio:', error);
+      }
+
+      // Create audio blob with explicit codec
+      const audioBlob = new Blob(chunksRef.current, { 
+        type: 'audio/webm;codecs=opus' 
+      });
+
+      // Get duration and ensure it's valid
+      const duration = await getDuration(audioBlob);
+      console.log('Final validated duration:', duration);
+
+      // Create URL and update state
+      const url = URL.createObjectURL(audioBlob);
+      setAudioUrl(url);
+      setAudioDuration(duration);
+
+      // Pass both blob and duration to parent
+      onAudioRecorded(audioBlob, duration);
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
       setIsAnalyzing(false);
-      // Fallback to realtime transcript if analysis fails
-      const fallbackTranscript = finalTranscript.trim();
-      setEditableTranscript(fallbackTranscript);
-      onTranscription(fallbackTranscript);
-      onAudioRecorded(audioBlob);
+      
+    } catch (error) {
+      console.error('Stop recording error:', error);
+      setError('Failed to process recording');
+      setIsPostProcessing(false);
+      setIsAnalyzing(false);
     }
   };
 
@@ -232,6 +368,16 @@ export default function VoiceRecorder({ onTranscription, onAudioRecorded, onInte
     };
   }, []);
 
+  // Add cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanupAudioResources();
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, []);
+
   return (
     <div className="space-y-4">
       {error && (
@@ -240,7 +386,7 @@ export default function VoiceRecorder({ onTranscription, onAudioRecorded, onInte
         </div>
       )}
 
-      {isRecording && (
+      {(isRecording || isAnalyzing || isPostProcessing) && (
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow">
             <div className="flex items-center gap-3">
@@ -249,42 +395,49 @@ export default function VoiceRecorder({ onTranscription, onAudioRecorded, onInte
                 transition={{ repeat: Infinity, duration: 1.5 }}
                 className="w-3 h-3 bg-red-500 rounded-full"
               />
-              <span className="text-sm font-medium text-gray-700">Recording...</span>
+              <span className="text-sm font-medium text-gray-700">
+                {isRecording ? 'Recording...' : isPostProcessing ? 'Finalizing transcription...' : 'Processing audio...'}
+              </span>
             </div>
-            <button
-              onClick={handleStopRecording}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              aria-label="Stop recording"
-            >
-              <Square className="w-5 h-5 text-gray-600" />
-            </button>
+            {isRecording && (
+              <button
+                onClick={handleStopRecording}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="Stop recording"
+              >
+                <Square className="w-5 h-5 text-gray-600" />
+              </button>
+            )}
           </div>
 
-          {/* Realtime transcription display */}
-          {realtimeText && (
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="text-sm text-gray-600 mb-2">Transcribing in real-time...</div>
-              <p className="text-gray-800">{realtimeText}</p>
+          {/* Updated transcription display */}
+          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="text-sm text-gray-600 mb-2">
+              {isRecording ? 'Transcribing in real-time...' : 
+               isPostProcessing ? 'Finalizing transcription...' : 
+               'Processing audio...'}
             </div>
-          )}
+            <p className="text-gray-800">{realtimeText}</p>
+            {(isAnalyzing || isPostProcessing) && (
+              <div className="flex items-center gap-2 mt-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent" />
+                <span className="text-sm text-blue-800">
+                  {isPostProcessing ? 'Capturing final transcription...' : 'Processing audio...'}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {isAnalyzing && (
-        <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-          <div className="flex items-center gap-3">
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent" />
-            <span className="text-sm text-blue-800">Analyzing audio for accurate transcription...</span>
-          </div>
-        </div>
-      )}
-
-      {audioUrl ? (
+      {/* Show editing interface only when processing is complete */}
+      {audioUrl && !isPostProcessing && !isAnalyzing && (
         <div className="space-y-4">
           <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow">
             <AudioPlayer 
               src={audioUrl} 
               className="flex-1"
+              key={audioUrl} // Force re-render on new audio
             />
             <button
               onClick={() => setShowDeleteConfirm(true)}
@@ -303,15 +456,19 @@ export default function VoiceRecorder({ onTranscription, onAudioRecorded, onInte
               id="transcript"
               value={editableTranscript}
               onChange={(e) => {
-                setEditableTranscript(e.target.value);
-                onTranscription(e.target.value);
+                const newValue = e.target.value;
+                setEditableTranscript(newValue);
+                onTranscription(newValue);
+                // Adjust height
+                e.target.style.height = 'auto';
+                e.target.style.height = `${e.target.scrollHeight}px`;
               }}
-              className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              rows={4}
+              className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-hidden min-h-[96px]"
+              style={{ height: 'auto' }}
             />
           </div>
         </div>
-      ) : null}
+      )}
 
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
