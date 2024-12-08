@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import Loading from './loading';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export const metadata: Metadata = {
   title: 'Opportunity Details | Giving Back Studio',

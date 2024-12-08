@@ -19,6 +19,7 @@ import {
   DocumentData,
   Query,
   CollectionReference,
+  QueryConstraint,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { FirestoreData } from "../types";
@@ -43,26 +44,22 @@ export const addDocument = (collectionName: string, data: FirestoreData) =>
 
 type WhereClause = [string, WhereFilterOp, any];
 
-export const getDocuments = async <T extends DocumentData>(
-  collectionName: string,
-  whereClause?: WhereClause
-): Promise<(T & { id: string })[]> => {
+export const getDocuments = async <T>(
+  path: string,
+  ...queryConstraints: QueryConstraint[]
+): Promise<T[]> => {
   try {
-    let q: Query | CollectionReference = collection(db, collectionName);
-    
-    if (whereClause) {
-      const [field, operator, value] = whereClause;
-      q = query(q, where(field, operator, value));
-    }
-    
+    const collectionRef = collection(db, path);
+    const q = query(collectionRef, ...queryConstraints);
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
+
+    return querySnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
-    })) as (T & { id: string })[];
+      ...doc.data(),
+    })) as T[];
   } catch (error) {
-    console.error('Error getting documents:', error);
-    throw error;
+    console.error(`Error fetching documents from ${path}:`, error);
+    throw new Error(`Failed to fetch documents from ${path}`);
   }
 };
 
@@ -75,25 +72,25 @@ export const updateDocument = (
 export const deleteDocument = (collectionName: string, id: string) =>
   deleteDoc(doc(db, collectionName, id));
 
-export const getDocumentById = async <T extends DocumentData>(
-  collectionName: string, 
-  documentId: string
-): Promise<(T & { id: string }) | null> => {
+export const getDocumentById = async <T>(
+  collection: string,
+  id: string
+): Promise<T | null> => {
   try {
-    const docRef = doc(db, collectionName, documentId);
+    const docRef = doc(db, collection, id);
     const docSnap = await getDoc(docRef);
-    
+
     if (!docSnap.exists()) {
       return null;
     }
 
     return {
       id: docSnap.id,
-      ...docSnap.data()
-    } as T & { id: string };
+      ...docSnap.data(),
+    } as T;
   } catch (error) {
-    console.error('Error getting document:', error);
-    throw error;
+    console.error(`Error fetching document from ${collection}:`, error);
+    throw new Error(`Failed to fetch document from ${collection}`);
   }
 };
 

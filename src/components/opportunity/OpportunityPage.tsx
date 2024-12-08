@@ -24,6 +24,15 @@ export default function OpportunityPage({ params }: OpportunityPageProps) {
 
   const fetchOpportunityAndReplies = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      
+      // Validate ID parameter
+      if (!params.id) {
+        setError('Invalid opportunity ID');
+        return;
+      }
+
       const opportunityData = await getDocumentById<Opportunity>('opportunities', params.id);
       if (!opportunityData) {
         setError('Opportunity not found');
@@ -39,7 +48,7 @@ export default function OpportunityPage({ params }: OpportunityPageProps) {
       setReplies(sortedReplies);
     } catch (error) {
       console.error('Error fetching opportunity:', error);
-      setError('Failed to load opportunity');
+      setError('Failed to load opportunity. Please try again later.');
     } finally {
       setLoading(false);
     }
