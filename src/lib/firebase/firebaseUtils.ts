@@ -20,6 +20,7 @@ import {
   Query,
   CollectionReference,
   QueryConstraint,
+  onSnapshot,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { FirestoreData } from "../types";
@@ -99,4 +100,22 @@ export const uploadFile = async (file: File, path: string) => {
   const storageRef = ref(storage, path);
   await uploadBytes(storageRef, file);
   return getDownloadURL(storageRef);
+};
+
+export const onDocumentsChange = (
+  collectionName: string,
+  callback: (docs: any[]) => void
+) => {
+  const q = query(
+    collection(db, collectionName),
+    orderBy('createdAt', 'desc')
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const docs = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    callback(docs);
+  });
 };

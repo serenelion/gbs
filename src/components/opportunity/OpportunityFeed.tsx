@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { getDocuments } from '@/lib/firebase/firebaseUtils';
+import { useEffect, useState, useCallback } from 'react';
+import { getDocuments, onDocumentsChange } from '@/lib/firebase/firebaseUtils';
 import OpportunityCard from './OpportunityCard';
 import { Opportunity } from '@/lib/types';
 
@@ -9,23 +9,36 @@ export default function OpportunityFeed() {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchOpportunities = async () => {
-      try {
-        const docs = await getDocuments('opportunities');
-        const sortedDocs = docs.sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-        setOpportunities(sortedDocs as Opportunity[]);
-      } catch (error) {
-        console.error('Error fetching opportunities:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOpportunities();
+  // Move fetchOpportunities outside useEffect and memoize it
+  const fetchOpportunities = useCallback(async () => {
+    try {
+      const docs = await getDocuments('opportunities');
+      const sortedDocs = docs.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setOpportunities(sortedDocs as Opportunity[]);
+    } catch (error) {
+      console.error('Error fetching opportunities:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    // Initial fetch
+    fetchOpportunities();
+
+    // Set up real-time listener
+    const unsubscribe = onDocumentsChange('opportunities', (docs) => {
+      const sortedDocs = docs.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setOpportunities(sortedDocs as Opportunity[]);
+    });
+
+    // Cleanup subscription
+    return () => unsubscribe();
+  }, [fetchOpportunities]);
 
   if (loading) {
     return (
@@ -50,7 +63,11 @@ export default function OpportunityFeed() {
   return (
     <div className="space-y-6">
       {opportunities.map((opportunity) => (
-        <OpportunityCard key={opportunity.id} opportunity={opportunity} />
+        <OpportunityCard 
+          key={opportunity.id} 
+          opportunity={opportunity}
+          onReplySuccess={fetchOpportunities}
+        />
       ))}
     </div>
   );

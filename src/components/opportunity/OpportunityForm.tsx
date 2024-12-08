@@ -7,9 +7,11 @@ import { addDocument, uploadFile } from '@/lib/firebase/firebaseUtils';
 import SignInWithGoogle from '../auth/SignInWithGoogle';
 import { Trash2, Mic, Send } from 'lucide-react';
 import AudioWrapper from '../ui/AudioWrapper';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 export default function OpportunityForm() {
   const { user } = useAuth();
+  const toast = useToast();
   const [content, setContent] = useState('');
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioPreview, setAudioPreview] = useState<string | null>(null);
@@ -35,6 +37,7 @@ export default function OpportunityForm() {
     e.preventDefault();
     if (!user || !content.trim()) return;
 
+    const loadingId = toast.loading('Sharing your opportunity...');
     setIsSubmitting(true);
     try {
       let audioUrl: string | null = null;
@@ -64,8 +67,13 @@ export default function OpportunityForm() {
       setAudioPreview(null);
       setContent('');
       setIsTyping(false);
+
+      toast.close(loadingId);
+      toast.success('Opportunity shared successfully! 🎉');
     } catch (error) {
       console.error('Error posting opportunity:', error);
+      toast.close(loadingId);
+      toast.error('Failed to share opportunity. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
