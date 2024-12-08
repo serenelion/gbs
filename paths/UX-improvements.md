@@ -4,8 +4,10 @@
 
 The goal is to create a seamless experience for sharing and responding to opportunities, with particular focus on audio handling and real-time interactions.
 
-1. **Voice Transcription Enhancement**
-   - Prevent duplicate transcriptions during recording
+1. **Audio Metadata and Storage Enhancement** (do now)
+   - Add audio duration metadata during upload
+   - Implement proper cleanup of temporary audio files
+   - Add error handling for metadata extraction
 
 2. **Audio Player Enhancement**
    - Fix duration display to show correct mm:ss format
@@ -13,7 +15,7 @@ The goal is to create a seamless experience for sharing and responding to opport
    - Ensure consistent playback across opportunities and replies
    - Add visual feedback during audio loading/buffering
    - Implement error handling for failed audio loads
-   - Add interactive progress bar for seeking
+   - Add interactive visualizer bar which allows seeking through the audio
 
 3. **OpportunityCard Improvements**
    - Remove like functionality to focus on meaningful interactions

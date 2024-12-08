@@ -1,13 +1,13 @@
 export interface Opportunity {
   id: string;
   userId: string;
-  userName?: string;
-  userPhotoUrl?: string;
+  userName: string;
+  userPhotoUrl: string | null;
   content: string;
-  audioUrl?: string;
+  audioUrl?: string | null;
   createdAt: string;
   likes: string[];
-  replies?: Reply[];
+  replies: string[];
 }
 
 // Generic type for Firestore document data
@@ -28,8 +28,9 @@ export type FirestoreData = {
 export interface Reply {
   id: string;
   userId: string;
+  userName: string;
+  userPhotoUrl: string | null;
   content: string;
-  audioUrl?: string;
-  transcription?: string;
+  audioUrl?: string | null;
   createdAt: string;
 } 

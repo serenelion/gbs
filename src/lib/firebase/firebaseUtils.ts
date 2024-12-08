@@ -7,12 +7,14 @@ import {
 import {
   collection,
   addDoc,
+  getDoc,
   getDocs,
   doc,
   updateDoc,
   deleteDoc,
   query,
   where,
+  orderBy,
   WhereFilterOp,
   DocumentData,
   Query,
@@ -72,6 +74,28 @@ export const updateDocument = (
 
 export const deleteDocument = (collectionName: string, id: string) =>
   deleteDoc(doc(db, collectionName, id));
+
+export const getDocumentById = async <T extends DocumentData>(
+  collectionName: string, 
+  documentId: string
+): Promise<(T & { id: string }) | null> => {
+  try {
+    const docRef = doc(db, collectionName, documentId);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) {
+      return null;
+    }
+
+    return {
+      id: docSnap.id,
+      ...docSnap.data()
+    } as T & { id: string };
+  } catch (error) {
+    console.error('Error getting document:', error);
+    throw error;
+  }
+};
 
 // Storage functions
 export const uploadFile = async (file: File, path: string) => {
