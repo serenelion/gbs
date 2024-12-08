@@ -90,6 +90,12 @@ export default function OpportunityForm() {
     setShowDeleteConfirm(false);
   };
 
+  const handleTextFocus = () => {
+    if (!user) {
+      setShowAuth(true);
+    }
+  };
+
   const handleRecordClick = () => {
     if (!user) {
       setShowAuth(true);
@@ -104,48 +110,65 @@ export default function OpportunityForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="bg-white rounded-lg shadow-sm border p-4">
-        {audioPreview && (
-          <div className="mb-3">
-            <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                Voice Note Transcription
-              </span>
-              <span>Edit only to fix transcription errors</span>
-            </div>
-          </div>
-        )}
-        <div className="flex items-center gap-3">
-          <textarea
-            value={content}
-            onChange={handleTextChange}
-            placeholder={audioPreview ? "Edit transcription if needed..." : "Share an opportunity..."}
-            className="flex-1 p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-            rows={1}
-          />
-          {!isTyping && !audioPreview && !showVoiceRecorder ? (
+        {showAuth && !user ? (
+          <div className="flex flex-col items-center justify-center py-6">
+            <h3 className="text-lg font-medium mb-4">Sign in to share opportunities</h3>
+            <SignInWithGoogle />
             <button
               type="button"
-              onClick={handleRecordClick}
-              className="flex-shrink-0 p-3 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
-              aria-label="Record voice note"
+              onClick={() => setShowAuth(false)}
+              className="mt-4 text-sm text-gray-500 hover:text-gray-700"
             >
-              <Mic className="w-5 h-5" />
+              Cancel
             </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={isSubmitting || !content.trim()}
-              className={`flex-shrink-0 p-3 rounded-full transition-colors ${
-                isSubmitting || !content.trim()
-                  ? 'bg-gray-100 text-gray-400'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
-              aria-label="Share opportunity"
-            >
-              <Send className="w-5 h-5" />
-            </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <>
+            {audioPreview && (
+              <div className="mb-3">
+                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Voice Note Transcription
+                  </span>
+                  <span>Edit only to fix transcription errors</span>
+                </div>
+              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <textarea
+                value={content}
+                onChange={handleTextChange}
+                onFocus={handleTextFocus}
+                placeholder={audioPreview ? "Edit transcription if needed..." : "Share an opportunity..."}
+                className="flex-1 p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                rows={1}
+              />
+              {!isTyping && !audioPreview && !showVoiceRecorder ? (
+                <button
+                  type="button"
+                  onClick={handleRecordClick}
+                  className="flex-shrink-0 p-3 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
+                  aria-label="Record voice note"
+                >
+                  <Mic className="w-5 h-5" />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !content.trim()}
+                  className={`flex-shrink-0 p-3 rounded-full transition-colors ${
+                    isSubmitting || !content.trim()
+                      ? 'bg-gray-100 text-gray-400'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                  aria-label="Share opportunity"
+                >
+                  <Send className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {showVoiceRecorder && (
@@ -214,22 +237,6 @@ export default function OpportunityForm() {
                 Delete
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {showAuth && !user && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/95 rounded-lg backdrop-blur-sm">
-          <div className="text-center p-6">
-            <h3 className="text-lg font-medium mb-4">Sign in to share opportunities</h3>
-            <SignInWithGoogle />
-            <button
-              type="button"
-              onClick={() => setShowAuth(false)}
-              className="mt-4 text-sm text-gray-500 hover:text-gray-700"
-            >
-              Cancel
-            </button>
           </div>
         </div>
       )}

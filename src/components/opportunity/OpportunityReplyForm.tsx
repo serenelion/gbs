@@ -27,23 +27,6 @@ export default function OpportunityReplyForm({ opportunityId, onSuccess }: Oppor
   const [isRecorderLoading, setIsRecorderLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  if (loading) {
-    return (
-      <div className="animate-pulse bg-white rounded-lg shadow-sm border p-6">
-        <div className="h-32 bg-gray-100 rounded" />
-      </div>
-    );
-  }
-
-  if (!user && !showAuth) {
-    return (
-      <div className="bg-white rounded-lg shadow-sm border p-6 text-center">
-        <h3 className="text-lg font-medium mb-4">Sign in to join the conversation</h3>
-        <SignInWithGoogle />
-      </div>
-    );
-  }
-
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     setContent(newContent);
@@ -98,10 +81,18 @@ export default function OpportunityReplyForm({ opportunityId, onSuccess }: Oppor
     }
   };
 
+  const handleTextFocus = () => {
+    if (!user) {
+      setShowAuth(true);
+    }
+  };
+
   const handleRecordClick = () => {
+    if (!user) {
+      setShowAuth(true);
+      return;
+    }
     setShowVoiceRecorder(true);
-    setIsRecorderLoading(true);
-    setTimeout(() => setIsRecorderLoading(false), 1000);
   };
 
   const handleDelete = () => {
@@ -123,65 +114,82 @@ export default function OpportunityReplyForm({ opportunityId, onSuccess }: Oppor
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="bg-white rounded-lg shadow-sm border p-4">
-        {audioPreview && (
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                Voice Note Transcription
-              </span>
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete
-              </button>
-            </div>
-          </div>
-        )}
-        <div className="flex items-center gap-3">
-          <textarea
-            value={content}
-            onChange={handleTextChange}
-            placeholder={audioPreview ? "Edit transcription if needed..." : "Write a reply..."}
-            className="flex-1 p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-            rows={1}
-            disabled={isSubmitting}
-          />
-          {!isTyping && !audioPreview && !showVoiceRecorder ? (
+        {showAuth && !user ? (
+          <div className="flex flex-col items-center justify-center py-6">
+            <h3 className="text-lg font-medium mb-4">Sign in to reply</h3>
+            <SignInWithGoogle />
             <button
               type="button"
-              onClick={handleRecordClick}
-              disabled={isSubmitting}
-              className={`flex-shrink-0 p-3 rounded-full transition-colors ${
-                isSubmitting 
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-              }`}
-              aria-label="Record voice note"
+              onClick={() => setShowAuth(false)}
+              className="mt-4 text-sm text-gray-500 hover:text-gray-700"
             >
-              <Mic className="w-5 h-5" />
+              Cancel
             </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={isSubmitting || !content.trim()}
-              className={`flex-shrink-0 p-3 rounded-full transition-colors ${
-                isSubmitting || !content.trim()
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
-              aria-label="Send reply"
-            >
-              {isSubmitting ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+          </div>
+        ) : (
+          <>
+            {audioPreview && (
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Voice Note Transcription
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <textarea
+                value={content}
+                onChange={handleTextChange}
+                onFocus={handleTextFocus}
+                placeholder={audioPreview ? "Edit transcription if needed..." : "Write a reply..."}
+                className="flex-1 p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                rows={1}
+                disabled={isSubmitting}
+              />
+              {!isTyping && !audioPreview && !showVoiceRecorder ? (
+                <button
+                  type="button"
+                  onClick={handleRecordClick}
+                  disabled={isSubmitting}
+                  className={`flex-shrink-0 p-3 rounded-full transition-colors ${
+                    isSubmitting 
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                  }`}
+                  aria-label="Record voice note"
+                >
+                  <Mic className="w-5 h-5" />
+                </button>
               ) : (
-                <Send className="w-5 h-5" />
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !content.trim()}
+                  className={`flex-shrink-0 p-3 rounded-full transition-colors ${
+                    isSubmitting || !content.trim()
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                  aria-label="Send reply"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Send className="w-5 h-5" />
+                  )}
+                </button>
               )}
-            </button>
-          )}
-        </div>
+            </div>
+          </>
+        )}
       </div>
 
       {showVoiceRecorder && (
@@ -221,13 +229,6 @@ export default function OpportunityReplyForm({ opportunityId, onSuccess }: Oppor
             }}
             disabled={isSubmitting}
           />
-        </div>
-      )}
-
-      {showAuth && !user && (
-        <div className="bg-white/95 rounded-lg p-6 text-center shadow-sm border">
-          <h3 className="text-lg font-medium mb-4">Sign in to reply</h3>
-          <SignInWithGoogle />
         </div>
       )}
 
