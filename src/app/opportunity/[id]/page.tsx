@@ -3,18 +3,17 @@ import OpportunityPage from '@/components/opportunity/OpportunityPage';
 import { Suspense } from 'react';
 import Loading from './loading';
 
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
-
 export const metadata: Metadata = {
   title: 'Opportunity Details | Giving Back Studio',
   description: 'View and respond to opportunities in the social enterprise community',
 };
 
-export default function Page({ params }: { params: { id: string } }) {
+export default async function Page({ params }: { params: { id: string } }) {
   return (
-    <Suspense fallback={<Loading />}>
-      <OpportunityPage params={params} />
-    </Suspense>
+    <div className="min-h-screen">
+      <Suspense fallback={<Loading />}>
+        <OpportunityPage params={params} />
+      </Suspense>
+    </div>
   );
 } 
