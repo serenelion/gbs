@@ -14,8 +14,12 @@ export default function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const handleSignOut = async () => {
-    await signOut();
-    setShowUserMenu(false);
+    try {
+      await signOut();
+      setShowUserMenu(false);
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (

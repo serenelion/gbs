@@ -38,19 +38,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Error signing in with Google", error);
+      throw error;
     }
   };
 
-  const signOutUser = async () => {
+  const signOut = async () => {
     try {
       await firebaseSignOut(auth);
     } catch (error) {
       console.error("Error signing out", error);
+      throw error;
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut: signOutUser }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   );

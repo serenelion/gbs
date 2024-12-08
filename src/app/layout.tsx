@@ -4,6 +4,7 @@ import { Providers } from "./providers";
 import Header from "@/components/layout/Header";
 import "@/styles/globals.css";
 import Footer from "@/components/layout/Footer";
+import { AuthProvider } from '@/lib/contexts/AuthContext';
 
 export const metadata: Metadata = {
   title: "Giving Back Studio",
@@ -19,11 +20,13 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen flex flex-col">
         <Suspense>
-          <Providers>
-            <Header />
-            {children}
-            <Footer />
-          </Providers>
+          <AuthProvider>
+            <Providers>
+              <Header />
+              {children}
+              <Footer />
+            </Providers>
+          </AuthProvider>
         </Suspense>
       </body>
     </html>
