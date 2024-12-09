@@ -1,19 +1,29 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
-import dynamic from 'next/dynamic';
-import Loading from '@/app/loading';
+import dynamic from "next/dynamic";
+import Loading from "@/app/loading";
 
-const OpportunityForm = dynamic(() => import("../opportunity/OpportunityForm"), {
-  ssr: false,
-  loading: () => <div className="animate-pulse h-32 bg-gray-100 rounded-lg" />
-});
+const OpportunityForm = dynamic(
+  () => import("../opportunity/OpportunityForm"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="animate-pulse h-32 bg-gray-100 rounded-lg" />
+    ),
+  },
+);
 
-const OpportunityFeed = dynamic(() => import("../opportunity/OpportunityFeed"), {
-  ssr: false,
-  loading: () => <div className="animate-pulse h-64 bg-gray-100 rounded-lg" />
-});
+const OpportunityFeed = dynamic(
+  () => import("../opportunity/OpportunityFeed"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="animate-pulse h-64 bg-gray-100 rounded-lg" />
+    ),
+  },
+);
 
 export default function ClientHome() {
   const [mounted, setMounted] = useState(false);
@@ -33,16 +43,18 @@ export default function ClientHome() {
           Social Enterprise Forum
         </h1>
         <p className="text-gray-600">
-          Connect and share opportunities with the social enterprise community
+          Find and share collaboration opportunities with fellow social
+          enterprise creators.
         </p>
       </div>
 
       <div className="mb-8">
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-2">Share an Opportunity</h2>
+          <h2 className="text-xl font-semibold mb-2">
+            Share a Collaboration Opportunity
+          </h2>
           <p className="text-gray-600 mb-4">
-            Help grow the community by sharing opportunities for collaboration,
-            funding, or support.
+            Get support to realize your greatest aspirations.
           </p>
           {mounted && <OpportunityForm />}
         </div>
@@ -54,4 +66,4 @@ export default function ClientHome() {
       </div>
     </main>
   );
-} 
+}
