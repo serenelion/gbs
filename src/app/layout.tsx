@@ -6,6 +6,7 @@ import "@/styles/globals.css";
 import Footer from "@/components/layout/Footer";
 import { AuthProvider } from '@/lib/contexts/AuthContext';
 import { ToastProvider } from '@/lib/contexts/ToastContext';
+import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
   title: "Giving Back Studio",
@@ -27,6 +28,7 @@ export default function RootLayout({
                 <Header />
                 {children}
                 <Footer />
+                <Analytics />
               </Providers>
             </ToastProvider>
           </AuthProvider>
